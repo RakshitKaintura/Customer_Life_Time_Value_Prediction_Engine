@@ -1,0 +1,30 @@
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_setup.py:_flush():81] Current SDK version is 0.26.0
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_setup.py:_flush():81] Configure stats pid to 32028
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_init.py:setup_run_log_directory():721] Logging user logs to e:\DOWNLOADS\DATA SCIENCE\PROFESSIONAL PROJECTS\CUSTOMER_LIFE_TIME_VALUE\notebooks\wandb\run-20260421_113320-8bxh6i1y\logs\debug.log
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_init.py:setup_run_log_directory():722] Logging internal logs to e:\DOWNLOADS\DATA SCIENCE\PROFESSIONAL PROJECTS\CUSTOMER_LIFE_TIME_VALUE\notebooks\wandb\run-20260421_113320-8bxh6i1y\logs\debug-internal.log
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_init.py:monkeypatch_ipython():640] configuring jupyter hooks <wandb.sdk.wandb_init._WandbInit object at 0x0000021ECD1A2350>
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_init.py:init():848] calling init triggers
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_init.py:init():853] wandb.init called with sweep_config: {}
+config: {'observation_months': 6, 'holdout_months': 6, 'observation_end': '2011-05-30', 'holdout_end': '2011-11-26', 'n_raw_rows': 541909, 'n_cleaned_rows': 397884, 'n_calibration_rows': 144541, 'n_holdout_rows': 225975, 'n_customers': 2708, 'n_repeat_buyers': 1327, 'pct_nonzero_ltv_12m': 69.24, '_wandb': {}}
+2026-04-21 11:33:20,823 INFO    MainThread:32028 [wandb_init.py:init():896] starting backend
+2026-04-21 11:33:23,611 INFO    MainThread:32028 [wandb_init.py:init():911] sending inform_init request
+2026-04-21 11:33:23,628 INFO    MainThread:32028 [wandb_init.py:init():919] backend started and connected
+2026-04-21 11:33:23,780 INFO    MainThread:32028 [wandb_run.py:_label_probe_notebook():1333] probe notebook
+2026-04-21 11:33:23,780 INFO    MainThread:32028 [wandb_run.py:_label_probe_notebook():1343] Unable to probe notebook: 'charmap' codec can't decode byte 0x90 in position 31500: character maps to <undefined>
+2026-04-21 11:33:23,780 INFO    MainThread:32028 [wandb_init.py:init():989] updated telemetry
+2026-04-21 11:33:23,995 INFO    MainThread:32028 [wandb_init.py:init():1013] communicating run to backend with 90.0 second timeout
+2026-04-21 11:33:26,743 INFO    MainThread:32028 [wandb_init.py:init():1058] starting run threads in backend
+2026-04-21 11:33:36,383 INFO    MainThread:32028 [wandb_run.py:_console_start():2542] atexit reg
+2026-04-21 11:33:36,384 INFO    MainThread:32028 [wandb_run.py:_redirect():2391] redirect: wrap_raw
+2026-04-21 11:33:36,384 INFO    MainThread:32028 [wandb_run.py:_redirect():2460] Wrapping output streams.
+2026-04-21 11:33:36,384 INFO    MainThread:32028 [wandb_run.py:_redirect():2483] Redirects installed.
+2026-04-21 11:33:36,391 INFO    MainThread:32028 [wandb_init.py:init():1098] run started, returning control to user process
+2026-04-21 11:33:40,023 INFO    MainThread:32028 [wandb_run.py:_finish():2309] finishing run rakshitkaintura2005-sir-m-visvesvaraya-institute-of-tech/Customer_Life_Time_Value/8bxh6i1y
+2026-04-21 11:33:40,023 INFO    MainThread:32028 [jupyter.py:save_history():435] not saving jupyter history
+2026-04-21 11:33:40,023 INFO    MainThread:32028 [jupyter.py:save_ipynb():362] not saving jupyter notebook
+2026-04-21 11:33:40,023 INFO    MainThread:32028 [wandb_init.py:_jupyter_teardown():625] cleaning up jupyter logic
+2026-04-21 11:33:40,023 INFO    MainThread:32028 [wandb_run.py:_atexit_cleanup():2508] got exitcode: 0
+2026-04-21 11:33:40,024 INFO    MainThread:32028 [wandb_run.py:_restore():2490] restore
+2026-04-21 11:33:40,024 INFO    MainThread:32028 [wandb_run.py:_restore():2496] restore done
+2026-04-21 11:33:45,823 INFO    MainThread:32028 [wandb_run.py:_footer_sync_info():3886] logging synced files

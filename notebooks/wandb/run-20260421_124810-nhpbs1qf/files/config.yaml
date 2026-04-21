@@ -1,0 +1,71 @@
+_wandb:
+    value:
+        cli_version: 0.26.0
+        e:
+            pw46mq71x28w6sfwulf8168iyv2nirl0:
+                codePath: e:\DOWNLOADS\DATA SCIENCE\PROFESSIONAL PROJECTS\CUSTOMER_LIFE_TIME_VALUE\notebooks\02_rfm_cohort_analysis.ipynb
+                codePathLocal: 02_rfm_cohort_analysis.ipynb
+                cpu_count: 12
+                cpu_count_logical: 16
+                disk:
+                    /:
+                        total: "193273524224"
+                        used: "133876256768"
+                email: rakshitkaintura2005@gmail.com
+                executable: e:\DOWNLOADS\DATA SCIENCE\PROFESSIONAL PROJECTS\CUSTOMER_LIFE_TIME_VALUE\.venv\Scripts\python.exe
+                git:
+                    commit: c6985fc5c2f6566f758fe070ad483840870df8fa
+                    remote: git@github.com:RakshitKaintura/Customer_Life_Time_Value_Prediction_Engine.git
+                host: ROCKY
+                memory:
+                    total: "16794763264"
+                os: Windows-10-10.0.26200-SP0
+                program: e:\DOWNLOADS\DATA SCIENCE\PROFESSIONAL PROJECTS\CUSTOMER_LIFE_TIME_VALUE\notebooks\02_rfm_cohort_analysis.ipynb
+                python: CPython 3.11.9
+                root: e:\DOWNLOADS\DATA SCIENCE\PROFESSIONAL PROJECTS\CUSTOMER_LIFE_TIME_VALUE\notebooks
+                startedAt: "2026-04-21T07:18:10.789860Z"
+                writerId: pw46mq71x28w6sfwulf8168iyv2nirl0
+        m: []
+        python_version: 3.11.9
+        t:
+            "1":
+                - 53
+                - 105
+            "2":
+                - 53
+                - 105
+            "3":
+                - 2
+                - 13
+                - 15
+                - 16
+            "4": 3.11.9
+            "5": 0.26.0
+            "8":
+                - 1
+                - 2
+                - 3
+            "12": 0.26.0
+            "13": windows-amd64
+holdout_end:
+    value: "2011-11-26"
+holdout_months:
+    value: 6
+n_calibration_rows:
+    value: 144541
+n_cleaned_rows:
+    value: 397884
+n_customers:
+    value: 2708
+n_holdout_rows:
+    value: 225975
+n_raw_rows:
+    value: 541909
+n_repeat_buyers:
+    value: 1327
+observation_end:
+    value: "2011-05-30"
+observation_months:
+    value: 6
+pct_nonzero_ltv_12m:
+    value: 69.24

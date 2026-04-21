@@ -22,6 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import polars as pl
+import duckdb
 import typer
 from loguru import logger
 from rich.console import Console
@@ -86,41 +87,45 @@ def load_uci_csv(path: str | Path) -> pl.DataFrame:
             schema_overrides={k: v for k, v in SCHEMA_OVERRIDES.items()},
         )
     else:
-        df = pl.read_csv(
-            path,
-            schema_overrides={k: v for k, v in SCHEMA_OVERRIDES.items()},
-            try_parse_dates=True,
-            null_values=["", "NA", "N/A", "NULL", "null"],
-            truncate_ragged_lines=True,
-            ignore_errors=True,
-        )
+        # ── THE NUCLEAR OPTION: DUCKDB LOADER ──────────────────
+        # DuckDB is world-class at parsing messy CSV dates (M/D/Y H:M vs D/M/Y)
+        # It handles missing leading zeros (1/1/2010) where Polars is too strict.
+        logger.info("Reading CSV with DuckDB for robust date parsing...")
+        rel_path = str(path).replace("\\", "/") # DuckDB prefers forward slashes
+        df = duckdb.sql(f"""
+            SELECT * FROM read_csv_auto('{rel_path}', 
+                types={{'InvoiceNo': 'VARCHAR', 'StockCode': 'VARCHAR', 'CustomerID': 'VARCHAR'}},
+                all_varchar=False,
+                encoding='ISO_8859_1',
+                ignore_errors=True,
+                dateformat='%m/%d/%Y',
+                timestampformat='%m/%d/%Y %H:%M'
+            )
+        """).pl()
 
     # Rename to snake_case
     existing_renames = {k: v for k, v in COLUMN_RENAME_MAP.items() if k in df.columns}
     df = df.rename(existing_renames)
 
-    # Parse InvoiceDate if it came in as string
-    if df["invoice_date"].dtype == pl.Utf8:
-        df = df.with_columns(
-            pl.col("invoice_date")
-                .str.strptime(pl.Datetime, format="%d/%m/%Y %H:%M", strict=False)
-                .alias("invoice_date")
-        )
-
-    # Ensure timezone-aware
-    if df["invoice_date"].dtype == pl.Datetime:
-        df = df.with_columns(
-            pl.col("invoice_date")
-                .dt.replace_time_zone("UTC")
-        )
-
-    # Normalise customer_id to string
+    # Normalise customer_id to string and clean up
     df = df.with_columns(
         pl.col("customer_id")
             .cast(pl.Utf8, strict=False)
             .str.strip_chars()
-            .str.replace(r"\.0$", "")   # remove ".0" from float-cast IDs
+            .str.replace(r"\.0$", "") 
     )
+
+    # DuckDB with explicit format should have already handled conversion.
+    # We just ensure it's temporal and UTC.
+    if df["invoice_date"].dtype == pl.Utf8:
+        # Fallback if DuckDB didn't detect it, though with explicit formats it should.
+        df = df.with_columns(pl.col("invoice_date").str.to_datetime(strict=False))
+
+    if df["invoice_date"].dtype.is_temporal():
+        df = df.with_columns(
+            pl.col("invoice_date").dt.replace_time_zone("UTC")
+        )
+
 
     logger.info(
         "Loaded {} rows — {} columns — date range {} to {}",
@@ -164,7 +169,8 @@ def build_customers_from_transactions(cleaned: pl.DataFrame) -> pl.DataFrame:
 def build_raw_records(df: pl.DataFrame) -> list[dict]:
     """Convert raw DataFrame to list of dicts for upsert."""
     return (
-        df.with_columns(
+        df.filter(pl.col("invoice_date").is_not_null())   # drop rows with unparseable dates
+        .with_columns(
             pl.col("invoice_date").dt.to_string("%Y-%m-%dT%H:%M:%S+00:00"),
             pl.col("customer_id").cast(pl.Utf8),
         )
@@ -174,14 +180,20 @@ def build_raw_records(df: pl.DataFrame) -> list[dict]:
 
 def build_cleaned_records(df: pl.DataFrame) -> list[dict]:
     """Convert cleaned DataFrame to list of dicts for upsert."""
+    # Drop generated columns — Postgres computes these automatically
+    generated_cols = [c for c in ["line_total"] if c in df.columns]
     return (
-        df.with_columns(
+        df.filter(pl.col("invoice_date").is_not_null())   # drop rows with unparseable dates
+        .drop(generated_cols)
+        .with_columns(
             pl.col("invoice_date").dt.to_string("%Y-%m-%dT%H:%M:%S+00:00"),
             pl.col("customer_id").cast(pl.Utf8),
             pl.col("amount_bucket").cast(pl.Int32),
         )
         .to_dicts()
     )
+
+
 
 
 # ─────────────────────────────────────────────────────────────
@@ -191,7 +203,10 @@ def build_cleaned_records(df: pl.DataFrame) -> list[dict]:
 def run_ingestion(
     csv_path: Path,
     dry_run: bool = False,
+    truncate: bool = False,
     skip_raw: bool = False,
+    skip_cleaned: bool = False,
+    skip_customers: bool = False,
     batch_size: int = 500,
 ) -> dict:
     """
@@ -234,52 +249,64 @@ def run_ingestion(
             logger.info("Dry run complete. raw={}, cleaned={}", len(raw_df), len(cleaned))
             return summary
 
+        # ── Step 2.5: Truncate (Optional) ───────────────────
+        if truncate:
+            task_tr = progress.add_task("Truncating tables…", total=None)
+            db.execute_sql("TRUNCATE TABLE raw_transactions, transactions, customers CASCADE;")
+            logger.info("Tables truncated: raw_transactions, transactions, customers")
+            progress.update(task_tr, completed=1, total=1)
+
         # ── Step 3: Upsert raw transactions ─────────────────
         if not skip_raw:
             task3 = progress.add_task(
                 f"Upserting {len(raw_df):,} raw rows…", total=None
             )
             raw_records = build_raw_records(raw_df)
-            n_raw = db.bulk_upsert(
+            n_raw = db.bulk_upsert_rest(
                 "raw_transactions",
                 raw_records,
-                conflict_columns=None,
+                on_conflict="",
                 batch_size=batch_size,
             )
             summary["raw_inserted"] = n_raw
             progress.update(task3, completed=1, total=1)
 
         # ── Step 4: Upsert cleaned transactions ─────────────
-        task4 = progress.add_task(
-            f"Upserting {len(cleaned):,} cleaned rows…", total=None
-        )
-        cleaned_records = build_cleaned_records(cleaned)
-        n_cleaned = db.bulk_upsert(
-            "transactions",
-            cleaned_records,
-            conflict_columns=None,
-            batch_size=batch_size,
-        )
-        summary["cleaned_inserted"] = n_cleaned
-        progress.update(task4, completed=1, total=1)
+        if not skip_cleaned:
+            task4 = progress.add_task(
+                f"Upserting {len(cleaned):,} cleaned rows…", total=None
+            )
+            cleaned_records = build_cleaned_records(cleaned)
+            n_cleaned = db.bulk_upsert_rest(
+                "transactions",
+                cleaned_records,
+                on_conflict="",
+                batch_size=batch_size,
+            )
+            summary["cleaned_inserted"] = n_cleaned
+            progress.update(task4, completed=1, total=1)
+        else:
+            n_cleaned = len(cleaned) # for the pipeline log
 
         # ── Step 5: Seed customers table ─────────────────────
-        task5 = progress.add_task("Seeding customers…", total=None)
-        customers_df = build_customers_from_transactions(cleaned)
-        customer_records = customers_df.with_columns(
-            pl.col("first_purchase_date").dt.to_string("%Y-%m-%dT%H:%M:%S+00:00"),
-            pl.col("last_purchase_date").dt.to_string("%Y-%m-%dT%H:%M:%S+00:00"),
-            pl.col("total_revenue").cast(pl.Float64),
-        ).to_dicts()
+        n_customers = 0
+        if not skip_customers:
+            task5 = progress.add_task("Seeding customers…", total=None)
+            customers_df = build_customers_from_transactions(cleaned)
+            customer_records = customers_df.with_columns(
+                pl.col("first_purchase_date").dt.to_string("%Y-%m-%dT%H:%M:%S+00:00"),
+                pl.col("last_purchase_date").dt.to_string("%Y-%m-%dT%H:%M:%S+00:00"),
+                pl.col("total_revenue").cast(pl.Float64),
+            ).to_dicts()
 
-        n_customers = db.bulk_upsert(
-            "customers",
-            customer_records,
-            conflict_columns=["customer_id"],
-            batch_size=batch_size,
-        )
-        summary["customers_inserted"] = n_customers
-        progress.update(task5, completed=1, total=1)
+            n_customers = db.bulk_upsert_rest(
+                "customers",
+                customer_records,
+                on_conflict="customer_id",
+                batch_size=batch_size,
+            )
+            summary["customers_inserted"] = n_customers
+            progress.update(task5, completed=1, total=1)
 
         # ── Step 6: Log pipeline run ─────────────────────────
         finished = datetime.now(timezone.utc)
@@ -297,12 +324,36 @@ def run_ingestion(
                 "customers": n_customers,
             },
         }
-        db.bulk_upsert("pipeline_runs", [run_record], conflict_columns=["run_id"])
+        db.bulk_upsert_rest("pipeline_runs", [run_record], on_conflict="run_id")
+
+    # ── Step 7: Automatic Verification ──────────────────
+    task7 = progress.add_task("Verifying database parity…", total=None)
+    db_counts = db.execute_sql("""
+        SELECT 
+            (SELECT COUNT(*) FROM raw_transactions) AS raw_count,
+            (SELECT COUNT(*) FROM transactions)     AS cleaned_count,
+            (SELECT COUNT(*) FROM customers)        AS customer_count
+    """)[0]
+    
+    summary["verification"] = {
+        "raw_parity": db_counts["raw_count"] >= summary.get("raw_rows", 0),
+        "cleaned_parity": db_counts["cleaned_count"] >= summary.get("cleaned_rows", 0),
+        "db_counts": db_counts
+    }
+    progress.update(task7, completed=1, total=1)
 
     summary["duration_seconds"] = (finished - started).total_seconds()
+    
+    # ── Final Report ────────────────────────────────────
     console.print(f"\n[green]✓ Ingestion complete[/green] — run_id: {run_id}")
+    if not summary["verification"]["cleaned_parity"]:
+        console.print("[bold red]⚠ WARNING: Database count mismatch detected![/bold red]")
+    else:
+        console.print("[bold green]✓ Database parity verified.[/bold green]")
+        
     console.print_json(data=summary)
     return summary
+
 
 
 # ─────────────────────────────────────────────────────────────
@@ -315,12 +366,23 @@ def ingest(
         ...,
         help="Path to the UCI Online Retail CSV/XLSX file",
     ),
-    dry_run: bool = typer.Option(False, "--dry-run", help="Parse but don't write to DB"),
-    skip_raw: bool = typer.Option(False, "--skip-raw", help="Skip raw_transactions upsert"),
-    batch_size: int = typer.Option(500, "--batch-size", help="Upsert batch size"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Don't write to DB"),
+    truncate: bool = typer.Option(False, "--truncate", help="Clear tables before ingestion"),
+    skip_raw: bool = typer.Option(False, "--skip-raw", help="Skip raw table load"),
+    skip_cleaned: bool = typer.Option(False, "--skip-cleaned", help="Skip cleaned table load"),
+    skip_customers: bool = typer.Option(False, "--skip-customers", help="Skip customers table load"),
+    batch_size: int = typer.Option(1000, "--batch-size", help="Batch size for upsert"),
 ) -> None:
     """Load UCI Online Retail dataset into Supabase."""
-    run_ingestion(csv_path, dry_run=dry_run, skip_raw=skip_raw, batch_size=batch_size)
+    run_ingestion(
+        csv_path, 
+        dry_run=dry_run,
+        truncate=truncate,
+        skip_raw=skip_raw,
+        skip_cleaned=skip_cleaned,
+        skip_customers=skip_customers,
+        batch_size=batch_size
+    )
 
 
 if __name__ == "__main__":

@@ -21,6 +21,8 @@ import numpy as np
 import polars as pl
 from loguru import logger
 
+from backend.db.models import RFMFeatures
+
 if TYPE_CHECKING:
     from backend.db.supabase_client import SupabaseClient
 
@@ -420,9 +422,12 @@ class RFMPipeline:
             pl.col("last_purchase_date").cast(pl.Utf8),
         ).to_dicts()
 
-        # Drop helper columns not in the DB schema
-        drop_cols = {"_n_source_rows", "first_purchase_date", "last_purchase_date"}
-        records = [{k: v for k, v in r.items() if k not in drop_cols} for r in records]
+        # Keep only columns that exist in the DB schema
+        valid_cols = RFMFeatures.__table__.columns.keys()
+        records = [
+            {k: v for k, v in r.items() if k in valid_cols}
+            for r in records
+        ]
 
         inserted = db_client.bulk_upsert(
             table_name="rfm_features",

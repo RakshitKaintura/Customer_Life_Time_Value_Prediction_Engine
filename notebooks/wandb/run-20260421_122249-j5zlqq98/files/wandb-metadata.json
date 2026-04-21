@@ -1,0 +1,28 @@
+{
+  "os":  "Windows-10-10.0.26200-SP0",
+  "python":  "CPython 3.11.9",
+  "startedAt":  "2026-04-21T06:52:49.877275Z",
+  "program":  "e:\\DOWNLOADS\\DATA SCIENCE\\PROFESSIONAL PROJECTS\\CUSTOMER_LIFE_TIME_VALUE\\notebooks\\02_rfm_cohort_analysis.ipynb",
+  "codePath":  "e:\\DOWNLOADS\\DATA SCIENCE\\PROFESSIONAL PROJECTS\\CUSTOMER_LIFE_TIME_VALUE\\notebooks\\02_rfm_cohort_analysis.ipynb",
+  "codePathLocal":  "02_rfm_cohort_analysis.ipynb",
+  "git":  {
+    "remote":  "git@github.com:RakshitKaintura/Customer_Life_Time_Value_Prediction_Engine.git",
+    "commit":  "c6985fc5c2f6566f758fe070ad483840870df8fa"
+  },
+  "email":  "rakshitkaintura2005@gmail.com",
+  "root":  "e:\\DOWNLOADS\\DATA SCIENCE\\PROFESSIONAL PROJECTS\\CUSTOMER_LIFE_TIME_VALUE\\notebooks",
+  "host":  "ROCKY",
+  "executable":  "e:\\DOWNLOADS\\DATA SCIENCE\\PROFESSIONAL PROJECTS\\CUSTOMER_LIFE_TIME_VALUE\\.venv\\Scripts\\python.exe",
+  "cpu_count":  12,
+  "cpu_count_logical":  16,
+  "disk":  {
+    "/":  {
+      "total":  "193273524224",
+      "used":  "133875552256"
+    }
+  },
+  "memory":  {
+    "total":  "16794763264"
+  },
+  "writerId":  "9ks24cej9yapb2fdqrbmqmcs6ysqqlg8"
+}

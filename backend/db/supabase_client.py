@@ -227,9 +227,45 @@ class SupabaseClient:
         logger.info("bulk_upsert → {} rows into {}", total, table_name)
         return total
 
+    def bulk_upsert_rest(
+        self,
+        table_name: str,
+        records: list[dict],
+        on_conflict: str = "",
+        batch_size: int = 1000,
+    ) -> int:
+        """
+        Bulk upsert via Supabase REST API (HTTPS port 443).
+        Faster and more reliable than direct postgres for one-time loads.
+        on_conflict: comma-separated column names for conflict resolution.
+        """
+        if not records:
+            return 0
+
+        total = 0
+        n_batches = (len(records) - 1) // batch_size + 1
+        for i in range(0, len(records), batch_size):
+            batch = records[i : i + batch_size]
+            kwargs = {"returning": "minimal"}
+            if on_conflict:
+                kwargs["on_conflict"] = on_conflict
+                kwargs["ignore_duplicates"] = True
+            self._sb.table(table_name).upsert(batch, **kwargs).execute()
+            total += len(batch)
+            logger.debug(
+                "REST upsert batch {}/{} into {} ({} rows)",
+                i // batch_size + 1,
+                n_batches,
+                table_name,
+                len(batch),
+            )
+        logger.info("bulk_upsert_rest → {} rows into {}", total, table_name)
+        return total
+
     def execute_sql(self, sql: str, params: dict | None = None) -> list[dict]:
         """Execute arbitrary SQL and return rows as dicts."""
-        with self._engine.connect() as conn:
+        # Use .begin() for automatic commit/rollback
+        with self._engine.begin() as conn:
             result = conn.execute(text(sql), params or {})
             if result.returns_rows:
                 keys = list(result.keys())

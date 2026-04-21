@@ -251,7 +251,7 @@ class PipelineRun(Base):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     records_processed: Mapped[int | None] = mapped_column(Integer)
     error_message: Mapped[str | None]     = mapped_column(Text)
-    metadata: Mapped[dict | None]         = mapped_column(JSONB)
+    run_metadata: Mapped[dict | None]         = mapped_column("metadata", JSONB)
     wandb_run_id: Mapped[str | None]      = mapped_column(String(50))
 
 

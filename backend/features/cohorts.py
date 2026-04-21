@@ -262,8 +262,7 @@ class CohortPipeline:
             rfm_df.lazy()
             .join(
                 cohort_df.lazy().select(
-                    ["customer_id", "cohort_month", "cohort_start_date",
-                     "first_purchase_date"]
+                    ["customer_id", "cohort_start_date"]
                 ),
                 on="customer_id",
                 how="left",
