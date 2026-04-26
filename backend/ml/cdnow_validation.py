@@ -14,21 +14,25 @@ This module:
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
 import polars as pl
-from lifetimes.datasets import load_cdnow_summary_data_with_monetary_value
+import lifetimes.datasets as lt_datasets
 from loguru import logger
 
 from backend.ml.bgnbd_model import BGNBDModel
 
-try:
-    # Present in some lifetimes versions only.
-    from lifetimes.datasets import load_cdnow_summary_data_with_abe_params
-except ImportError:  # pragma: no cover - version dependent
-    load_cdnow_summary_data_with_abe_params = None
+load_cdnow_summary_data_with_monetary_value: Callable[..., pd.DataFrame] = (
+    lt_datasets.load_cdnow_summary_data_with_monetary_value
+)
+# Present in some lifetimes versions only.
+load_cdnow_summary_data_with_abe_params = getattr(
+    lt_datasets,
+    "load_cdnow_summary_data_with_abe_params",
+    None,
+)
 
 
 def load_cdnow_as_polars() -> tuple[pl.DataFrame, pl.DataFrame]:

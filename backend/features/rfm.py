@@ -378,9 +378,13 @@ class RFMPipeline:
             horizon_months, len(holdout_df),
         )
 
+        horizon_end = self.observation_end + timedelta(days=horizon_months * 30)
+
         actual = (
             holdout_df.lazy()
             .filter(pl.col("customer_id").is_not_null())
+            .filter(pl.col("invoice_date").cast(pl.Date) > pl.lit(self.observation_end))
+            .filter(pl.col("invoice_date").cast(pl.Date) <= pl.lit(horizon_end))
             .group_by("customer_id")
             .agg(
                 (pl.col("quantity") * pl.col("unit_price"))
