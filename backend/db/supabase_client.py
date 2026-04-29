@@ -9,15 +9,17 @@ Two separate connection strategies:
 from __future__ import annotations
 
 import os
+import json
 from functools import lru_cache
 from typing import AsyncGenerator, Generator
 
 from loguru import logger
 from sqlalchemy import Engine, create_engine, event, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import Session, sessionmaker
 from supabase import Client, create_client
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from backend.config import settings
 
@@ -173,7 +175,12 @@ class SupabaseClient:
 
     # ── Bulk helpers (SQLAlchemy) ────────────────────────────
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(min=1, max=10))
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(min=1, max=10),
+        retry=retry_if_exception(lambda exc: not isinstance(exc, IntegrityError)),
+        reraise=True,
+    )
     def bulk_upsert(
         self,
         table_name: str,
@@ -189,7 +196,17 @@ class SupabaseClient:
             return 0
 
         total = 0
-        columns = list(records[0].keys())
+        normalized_records: list[dict] = []
+        for record in records:
+            normalized: dict = {}
+            for key, value in record.items():
+                if isinstance(value, (dict, list)):
+                    normalized[key] = json.dumps(value)
+                else:
+                    normalized[key] = value
+            normalized_records.append(normalized)
+
+        columns = list(normalized_records[0].keys())
         col_list = ", ".join(f'"{c}"' for c in columns)
         placeholders = ", ".join(f":{c}" for c in columns)
 
@@ -201,9 +218,12 @@ class SupabaseClient:
                 for c in columns
                 if c not in conflict_columns
             )
-            conflict_clause = (
-                f"ON CONFLICT ({conflict_target}) DO UPDATE SET {updates}"
-            )
+            if updates:
+                conflict_clause = (
+                    f"ON CONFLICT ({conflict_target}) DO UPDATE SET {updates}"
+                )
+            else:
+                conflict_clause = f"ON CONFLICT ({conflict_target}) DO NOTHING"
         else:
             conflict_clause = "ON CONFLICT DO NOTHING"
 
@@ -212,14 +232,14 @@ class SupabaseClient:
         )
 
         with self._engine.begin() as conn:
-            for i in range(0, len(records), batch_size):
-                batch = records[i : i + batch_size]
+            for i in range(0, len(normalized_records), batch_size):
+                batch = normalized_records[i : i + batch_size]
                 conn.execute(sql, batch)
                 total += len(batch)
                 logger.debug(
                     "Upserted batch {}/{} into {} ({} rows)",
                     i // batch_size + 1,
-                    (len(records) - 1) // batch_size + 1,
+                    (len(normalized_records) - 1) // batch_size + 1,
                     table_name,
                     len(batch),
                 )
