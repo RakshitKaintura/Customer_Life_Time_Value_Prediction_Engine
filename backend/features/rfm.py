@@ -15,7 +15,7 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 import polars as pl
@@ -108,7 +108,11 @@ def assign_amount_buckets(df: pl.DataFrame, n_buckets: int = 5) -> pl.DataFrame:
     Used as a Transformer token feature.
     """
     quantiles = df["line_total"].quantile([i / n_buckets for i in range(1, n_buckets)])
-    cuts = [float(quantiles[i]) for i in range(len(quantiles))]
+    cuts: list[float] = []
+    for q in quantiles:
+        if q is None:
+            raise ValueError("Cannot compute amount buckets: line_total has no non-null values.")
+        cuts.append(float(q))
 
     return df.with_columns(
         pl.when(pl.col("line_total") <= cuts[0]).then(1)
@@ -143,7 +147,13 @@ def make_calibration_holdout_split(
         calibration_df, holdout_df, obs_end_date, holdout_end_date
     """
     dates = df[date_col].cast(pl.Date)
-    dataset_start: date = dates.min()
+    dataset_start_raw = dates.min()
+    if dataset_start_raw is None:
+        raise ValueError("Cannot split calibration/holdout: invoice_date has no non-null values.")
+    if isinstance(dataset_start_raw, datetime):
+        dataset_start = dataset_start_raw.date()
+    else:
+        dataset_start = cast(date, dataset_start_raw)
 
     obs_end = dataset_start + timedelta(days=observation_months * 30)
     holdout_end = obs_end + timedelta(days=holdout_months * 30)
@@ -387,9 +397,12 @@ class RFMPipeline:
             .filter(pl.col("invoice_date").cast(pl.Date) <= pl.lit(horizon_end))
             .group_by("customer_id")
             .agg(
-                (pl.col("quantity") * pl.col("unit_price"))
+                (pl.col("quantity").cast(pl.Float64) * pl.col("unit_price").cast(pl.Float64))
                     .sum()
                     .alias(col_name)
+            )
+            .with_columns(
+                pl.col(col_name).cast(pl.Float64)
             )
             .collect()
         )
@@ -399,7 +412,7 @@ class RFMPipeline:
             rfm_df
             .join(actual, on="customer_id", how="left")
             .with_columns(
-                pl.col(col_name).fill_null(0.0)
+                pl.col(col_name).fill_null(0.0).cast(pl.Float64)
             )
         )
         logger.info(

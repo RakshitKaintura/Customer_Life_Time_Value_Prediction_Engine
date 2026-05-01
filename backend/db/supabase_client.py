@@ -266,11 +266,18 @@ class SupabaseClient:
         n_batches = (len(records) - 1) // batch_size + 1
         for i in range(0, len(records), batch_size):
             batch = records[i : i + batch_size]
-            kwargs = {"returning": "minimal"}
             if on_conflict:
-                kwargs["on_conflict"] = on_conflict
-                kwargs["ignore_duplicates"] = True
-            self._sb.table(table_name).upsert(batch, **kwargs).execute()
+                self._sb.table(table_name).upsert(
+                    batch,
+                    on_conflict=on_conflict,
+                    ignore_duplicates=True,
+                    returning="minimal",  # type: ignore[arg-type]
+                ).execute()
+            else:
+                self._sb.table(table_name).upsert(
+                    batch,
+                    returning="minimal",  # type: ignore[arg-type]
+                ).execute()
             total += len(batch)
             logger.debug(
                 "REST upsert batch {}/{} into {} ({} rows)",
