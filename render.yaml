@@ -7,7 +7,6 @@ services:
   - type: web
     name: ltv-prediction-api
     runtime: python
-    pythonVersion: 3.11
     region: oregon
     plan: free
     buildCommand: |
@@ -51,7 +50,6 @@ services:
   - type: worker
     name: ltv-marketing-worker
     runtime: python
-    pythonVersion: 3.11
     region: oregon
     plan: free
     buildCommand: |
