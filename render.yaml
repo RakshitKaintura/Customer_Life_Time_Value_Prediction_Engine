@@ -1,0 +1,77 @@
+# ============================================================
+# Render.com deployment configuration
+# ============================================================
+
+services:
+  # ── FastAPI Scoring API ────────────────────────────────────
+  - type: web
+    name: ltv-prediction-api
+    runtime: python
+    pythonVersion: 3.11
+    region: oregon
+    plan: free
+    buildCommand: |
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+      export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+      uv pip install --system ".[ml]"
+    startCommand: |
+      uvicorn backend.api.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    envVars:
+      - key:   ENVIRONMENT
+        value: production
+      - key:   LOG_LEVEL
+        value: INFO
+      - key:   SUPABASE_URL
+        sync:  false
+      - key:   SUPABASE_SERVICE_ROLE_KEY
+        sync:  false
+      - key:   DATABASE_URL
+        sync:  false
+      - key:   DATABASE_URL_ASYNC
+        sync:  false
+      - key:   API_SECRET_KEY
+        generateValue: true
+      - key:   HUBSPOT_API_KEY
+        sync:  false
+      - key:   SEGMENT_WRITE_KEY
+        sync:  false
+      - key:   GOOGLE_ADS_DEVELOPER_TOKEN
+        sync:  false
+      - key:   META_ACCESS_TOKEN
+        sync:  false
+      - key:   WANDB_API_KEY
+        sync:  false
+      - key:   MODELS_DIR
+        value: ./models
+      - key:   ONNX_PATH
+        value: ./models/transformer.onnx
+
+  # ── Background worker for marketing sync ──────────────────
+  - type: worker
+    name: ltv-marketing-worker
+    runtime: python
+    pythonVersion: 3.11
+    region: oregon
+    plan: free
+    buildCommand: |
+      curl -LsSf https://astral.sh/uv/install.sh | sh
+      export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+      uv pip install --system ".[ml]"
+    startCommand: |
+      python -m backend.workers.marketing_sync
+    envVars:
+      - key:   ENVIRONMENT
+        value: production
+      - key:   SUPABASE_URL
+        sync:  false
+      - key:   SUPABASE_SERVICE_ROLE_KEY
+        sync:  false
+      - key:   DATABASE_URL
+        sync:  false
+      - key:   GOOGLE_ADS_DEVELOPER_TOKEN
+        sync:  false
+      - key:   META_ACCESS_TOKEN
+        sync:  false
+      - key:   HUBSPOT_API_KEY
+        sync:  false

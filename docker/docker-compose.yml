@@ -1,0 +1,62 @@
+# ============================================================
+# LTV Prediction Engine — Docker Compose
+# For local development only.
+# Production uses Render (API) + Supabase (DB).
+# ============================================================
+
+version: "3.9"
+
+services:
+  # ── FastAPI Scoring API ────────────────────────────────────
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: ltv_api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - API_SECRET_KEY=${API_SECRET_KEY}
+      - HUBSPOT_API_KEY=${HUBSPOT_API_KEY}
+      - SEGMENT_WRITE_KEY=${SEGMENT_WRITE_KEY}
+    volumes:
+      - ../models:/app/models:ro
+      - ../data:/app/data:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ── Background worker (marketing syncs) ───────────────────
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: ltv_worker
+    command: ["python", "-m", "backend.workers.marketing_sync"]
+    environment:
+      - ENVIRONMENT=development
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - GOOGLE_ADS_DEVELOPER_TOKEN=${GOOGLE_ADS_DEVELOPER_TOKEN}
+      - META_ACCESS_TOKEN=${META_ACCESS_TOKEN}
+      - HUBSPOT_API_KEY=${HUBSPOT_API_KEY}
+    volumes:
+      - ../models:/app/models:ro
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
+networks:
+  default:
+    name: ltv_network

@@ -117,3 +117,6 @@ asyncio_mode = "auto"
 testpaths    = ["tests"]
 log_cli      = true
 log_level    = "INFO"
+filterwarnings = [
+    "ignore:.*pydantic.config.Extra.*:pydantic.warnings.PydanticDeprecatedSince20",
+]

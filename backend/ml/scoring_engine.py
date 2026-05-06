@@ -17,6 +17,7 @@ Used by FastAPI /score endpoint in Phase 6.
 from __future__ import annotations
 
 import time
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -241,9 +242,40 @@ class LTVScoringEngine:
         )
         if not rows:
             return None
-        rfm = rows[0]
+        rfm = self._normalize_rfm(rows[0])
         self._rfm_cache[customer_id] = rfm
         return rfm
+
+    def _normalize_rfm(self, rfm: dict) -> dict:
+        """Coerce DB numeric types (e.g., Decimal) into Python scalars."""
+        int_keys = {"frequency", "orders_count", "unique_categories"}
+        float_keys = {
+            "recency_days",
+            "t_days",
+            "monetary_avg",
+            "monetary_std",
+            "purchase_variance",
+            "avg_days_between_orders",
+        }
+
+        def coerce(value: Any, to_int: bool) -> Any:
+            if value is None:
+                return None
+            if isinstance(value, Decimal):
+                value = float(value)
+            try:
+                return int(value) if to_int else float(value)
+            except (TypeError, ValueError):
+                return value
+
+        normalized = dict(rfm)
+        for key in int_keys:
+            if key in normalized:
+                normalized[key] = coerce(normalized.get(key), to_int=True)
+        for key in float_keys:
+            if key in normalized:
+                normalized[key] = coerce(normalized.get(key), to_int=False)
+        return normalized
 
     def _get_sequence_tokens(self, customer_id: str) -> dict:
         """Load purchase sequence and convert to ONNX input tensors."""

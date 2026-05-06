@@ -117,11 +117,15 @@ def build_firmographic_lookup(
         return "smb"
 
     # days_to_second_purchase → plan_tier proxy
-    def d2s_to_tier(d: float) -> str:
-        if pd.isna(d):   return "free"
-        if d <= 7:        return "enterprise_trial"
-        if d <= 30:       return "professional"
-        if d <= 90:       return "starter"
+    def d2s_to_tier(d: float | int | None) -> str:
+        if d is None or pd.isna(d):
+            return "free"
+        if d <= 7:
+            return "enterprise_trial"
+        if d <= 30:
+            return "professional"
+        if d <= 90:
+            return "starter"
         return "free"
 
     # frequency → acquisition_channel proxy
@@ -131,12 +135,22 @@ def build_firmographic_lookup(
         weights = [0.15, 0.30, 0.20, 0.15, 0.10, 0.10]
         return rng.choice(choices, p=weights)
 
-    df["vertical"]            = df.get("country", pd.Series(["other"] * n, index=df.index)).map(
-        lambda c: country_to_vertical.get(c, "other")
-    )
-    df["company_size"]        = df["monetary_avg"].apply(monetary_to_size)
-    df["plan_tier"]           = df.get("days_to_second_purchase", pd.Series([365.0] * n, index=df.index)).apply(d2s_to_tier)
-    df["acquisition_channel"] = [freq_to_channel(f) for f in df["frequency"]]
+    def get_series(column: str, default_value: Any) -> pd.Series:
+        if column in df.columns:
+            return df[column]
+        return pd.Series([default_value] * n, index=df.index)
+
+    country_series = get_series("country", "other").fillna("other")
+    df["vertical"] = country_series.map(country_to_vertical).fillna("other")
+
+    monetary_series = pd.to_numeric(get_series("monetary_avg", 0.0), errors="coerce").fillna(0.0)
+    df["company_size"] = monetary_series.apply(monetary_to_size)
+
+    d2s_series = pd.to_numeric(get_series("days_to_second_purchase", 365.0), errors="coerce")
+    df["plan_tier"] = d2s_series.apply(d2s_to_tier)
+
+    frequency_series = pd.to_numeric(get_series("frequency", 0.0), errors="coerce").fillna(0.0)
+    df["acquisition_channel"] = [freq_to_channel(f) for f in frequency_series]
 
     # Add baseline LTV from actual_ltv_12m
     baseline_col = "actual_ltv_12m" if "actual_ltv_12m" in df.columns else "monetary_total"
@@ -147,7 +161,7 @@ def build_firmographic_lookup(
         cate_matrix = np.column_stack(list(cate_per_customer.values()))  # (n, k)
         cate_total  = cate_matrix.sum(axis=1).clip(min=0)
         cate_series = pd.Series(cate_total, index=customer_ids)
-        df["total_cate"] = df.index.map(cate_series).fillna(0)
+        df["total_cate"] = df.index.map(cate_series.to_dict()).fillna(0)
     else:
         df["total_cate"] = 0.0
 
@@ -249,10 +263,16 @@ class ColdStartScorer:
             return self._fallback_response(vertical, company_size, channel, plan_tier)
 
         # Normalise inputs
-        vertical     = vertical.lower().strip()
-        company_size = company_size.lower().strip()
-        channel      = channel.lower().strip()
-        plan_tier    = plan_tier.lower().strip()
+        def normalize_text(value: Any, default: str) -> str:
+            if not isinstance(value, str):
+                return default
+            text = value.strip().lower()
+            return text if text else default
+
+        vertical     = normalize_text(vertical, DEFAULT_FIRMOGRAPHIC["vertical"])
+        company_size = normalize_text(company_size, DEFAULT_FIRMOGRAPHIC["company_size"])
+        channel      = normalize_text(channel, DEFAULT_FIRMOGRAPHIC["acquisition_channel"])
+        plan_tier    = normalize_text(plan_tier, DEFAULT_FIRMOGRAPHIC["plan_tier"])
 
         fallback_levels = [
             {"vertical": vertical, "company_size": company_size, "channel": channel, "plan_tier": plan_tier},
@@ -305,9 +325,20 @@ class ColdStartScorer:
     ) -> dict:
         """Global average fallback when no firmographic match exists."""
         if self._table is not None and len(self._table) > 0:
-            global_avg = float(self._table["ltv_36m_estimate"].mean())
-            global_lo  = float(self._table["ltv_36m_estimate"].quantile(0.10))
-            global_hi  = float(self._table["ltv_36m_estimate"].quantile(0.90))
+            ltv_series = self._table["ltv_36m_estimate"].cast(pl.Float64)
+            mean_val = ltv_series.mean()
+            lo_val = ltv_series.quantile(0.10)
+            hi_val = ltv_series.quantile(0.90)
+
+            def safe_float(value: Any, default: float) -> float:
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    return default
+
+            global_avg = safe_float(mean_val, 500.0)
+            global_lo = safe_float(lo_val, 100.0)
+            global_hi = safe_float(hi_val, 2000.0)
         else:
             global_avg, global_lo, global_hi = 500.0, 100.0, 2000.0
 
