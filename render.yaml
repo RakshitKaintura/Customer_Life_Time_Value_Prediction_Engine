@@ -10,9 +10,8 @@ services:
     region: oregon
     plan: free
     buildCommand: |
-      curl -LsSf https://astral.sh/uv/install.sh | sh
-      export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
-      uv pip install --system ".[ml]"
+      python -m pip install --upgrade pip
+      python -m pip install ".[ml]"
     startCommand: |
       python -m uvicorn backend.api.main:app --host 0.0.0.0 --port $PORT --workers 1
     healthCheckPath: /health
