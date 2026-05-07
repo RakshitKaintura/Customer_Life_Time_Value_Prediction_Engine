@@ -44,8 +44,8 @@ class LTVScoringEngine:
     def __init__(
         self,
         bgnbd_model: Any,           # BGNBDModel
-        onnx_engine: Any,           # ONNXInferenceEngine
-        fusion_model: Any,          # XGBoostMetaLearner
+        onnx_engine: Any | None,    # ONNXInferenceEngine
+        fusion_model: Any | None,   # XGBoostMetaLearner
         cold_start_scorer: Any,     # ColdStartScorer
         db_client: Any,             # SupabaseClient
         max_seq_len: int = 50,
@@ -90,6 +90,32 @@ class LTVScoringEngine:
             t_days      = rfm.get("t_days", 365),
             monetary_avg= rfm.get("monetary_avg", 50.0),
         )
+
+        # Low-memory path: use BG/NBD only
+        if self.onnx is None or self.fusion is None:
+            ltv_12m = bgnbd_result["ltv_12m"]
+            ltv_24m = bgnbd_result["ltv_24m"]
+            ltv_36m = bgnbd_result["ltv_36m"]
+            segment = assign_segment(ltv_36m)
+            max_cac = compute_max_cac(ltv_36m)
+            elapsed_ms = int((time.perf_counter() - t0) * 1000)
+
+            return {
+                "customer_id":          customer_id,
+                "ltv_source":           "bgnbd_only",
+                "ltv_12m":              round(ltv_12m, 2),
+                "ltv_24m":              round(ltv_24m, 2),
+                "ltv_36m":              round(ltv_36m, 2),
+                "ltv_percentile":       self._get_percentile(ltv_36m),
+                "segment":              segment,
+                "probability_alive_12m": round(bgnbd_result["probability_alive"], 4),
+                "recommended_max_cac":  round(max_cac, 2),
+                "confidence_interval_36m": self._get_ci(customer_id, ltv_36m),
+                "top_ltv_drivers":      [],
+                "causal_levers":        [],
+                "lookalike_customer_ids": [],
+                "scoring_latency_ms":   elapsed_ms,
+            }
 
         # 3. Transformer ONNX scoring
         seq_tokens = self._get_sequence_tokens(customer_id)

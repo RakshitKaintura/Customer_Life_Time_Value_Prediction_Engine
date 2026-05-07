@@ -78,35 +78,39 @@ async def _load_models() -> None:
     onnx_engine = None
     onnx_path   = api_settings.ONNX_PATH
 
-    if Path(onnx_path).exists():
-        try:
-            from backend.ml.transformer_onnx import ONNXInferenceEngine
-            onnx_engine = ONNXInferenceEngine(str(onnx_path))
-            onnx_engine.warmup(max_seq_len=api_settings.MAX_SEQ_LEN)
-            logger.info("ONNX Runtime loaded and warmed up: {}", onnx_path)
-        except Exception as exc:
-            logger.warning("ONNX load failed: {}", exc)
+    if api_settings.DISABLE_HEAVY_MODELS:
+        logger.info("Heavy models disabled; skipping ONNX and fusion loading")
     else:
-        logger.warning("ONNX model not found at {}", onnx_path)
+        if Path(onnx_path).exists():
+            try:
+                from backend.ml.transformer_onnx import ONNXInferenceEngine
+                onnx_engine = ONNXInferenceEngine(str(onnx_path))
+                onnx_engine.warmup(max_seq_len=api_settings.MAX_SEQ_LEN)
+                logger.info("ONNX Runtime loaded and warmed up: {}", onnx_path)
+            except Exception as exc:
+                logger.warning("ONNX load failed: {}", exc)
+        else:
+            logger.warning("ONNX model not found at {}", onnx_path)
 
     # ── 4. XGBoost Fusion model ───────────────────────────────
     fusion_model = None
     fusion_meta  = models_dir / f"{api_settings.FUSION_MODEL_VERSION}_meta.pkl"
 
-    if fusion_meta.exists():
-        try:
-            from backend.ml.fusion import XGBoostMetaLearner
-            fusion_model = XGBoostMetaLearner.load_from_disk(
-                models_dir, api_settings.FUSION_MODEL_VERSION
-            )
-            logger.info("Fusion model loaded: {}", api_settings.FUSION_MODEL_VERSION)
-        except Exception as exc:
-            logger.warning("Fusion model load failed: {}", exc)
-    else:
-        logger.warning("Fusion model not found at {}", fusion_meta)
+    if not api_settings.DISABLE_HEAVY_MODELS:
+        if fusion_meta.exists():
+            try:
+                from backend.ml.fusion import XGBoostMetaLearner
+                fusion_model = XGBoostMetaLearner.load_from_disk(
+                    models_dir, api_settings.FUSION_MODEL_VERSION
+                )
+                logger.info("Fusion model loaded: {}", api_settings.FUSION_MODEL_VERSION)
+            except Exception as exc:
+                logger.warning("Fusion model load failed: {}", exc)
+        else:
+            logger.warning("Fusion model not found at {}", fusion_meta)
 
     # ── 5. Assemble scoring engine ────────────────────────────
-    if bgnbd_model and onnx_engine and fusion_model:
+    if bgnbd_model and (api_settings.DISABLE_HEAVY_MODELS or (onnx_engine and fusion_model)):
         from backend.ml.scoring_engine import LTVScoringEngine
         engine = LTVScoringEngine(
             bgnbd_model        = bgnbd_model,
@@ -118,7 +122,10 @@ async def _load_models() -> None:
             model_version      = api_settings.FUSION_MODEL_VERSION,
         )
         set_scoring_engine(engine)
-        logger.info("Full scoring engine assembled and registered")
+        if api_settings.DISABLE_HEAVY_MODELS:
+            logger.info("BG/NBD-only scoring engine assembled and registered")
+        else:
+            logger.info("Full scoring engine assembled and registered")
     else:
         logger.warning(
             "Scoring engine NOT assembled — missing: bgnbd={} onnx={} fusion={}",

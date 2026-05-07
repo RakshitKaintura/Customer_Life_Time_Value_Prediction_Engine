@@ -53,6 +53,9 @@ class APISettings(BaseSettings):
     # Scoring
     MAX_SEQ_LEN: int = 50
 
+    # Deployment toggles
+    DISABLE_HEAVY_MODELS: bool = False
+
 
 @lru_cache(maxsize=1)
 def get_api_settings() -> APISettings:
