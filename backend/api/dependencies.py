@@ -82,7 +82,7 @@ def get_scoring_engine() -> ScoringEngineProtocol:
     return _scoring_engine
 
 
-def set_scoring_engine(engine: ScoringEngineProtocol) -> None:
+def set_scoring_engine(engine: ScoringEngineProtocol | None) -> None:
     global _scoring_engine
     _scoring_engine = engine
     logger.info("Scoring engine registered in dependency injection")

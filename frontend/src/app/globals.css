@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 246 248 252;
+    --foreground: 12 20 33;
+    --card: 255 255 255;
+    --border: 226 232 240;
+    --ring: 14 116 144;
+    --brand: 14 116 144;
+    --brand-ink: 10 40 58;
+    --accent: 245 158 11;
+  }
+
+  * {
+    @apply border-slate-200;
+  }
+
+  body {
+    font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    background:
+      radial-gradient(900px 480px at 8% -10%, rgba(14, 116, 144, 0.14), transparent 60%),
+      radial-gradient(900px 520px at 92% 0%, rgba(245, 158, 11, 0.12), transparent 55%),
+      #f6f8fc;
+    @apply text-slate-900 antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display), "Times New Roman", serif;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-1.5;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-300;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply flex flex-1 flex-col overflow-y-auto;
+  }
+
+  .page-content {
+    @apply mx-auto flex-1 w-full max-w-[1200px] p-6;
+  }
+
+  .grid-cols-stats {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4;
+  }
+
+  .section-title {
+    @apply mb-1 text-base font-semibold text-slate-900;
+  }
+
+  .section-subtitle {
+    @apply text-sm text-slate-500;
+  }
+
+  .chart-container {
+    @apply rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.45)] backdrop-blur-sm;
+  }
+
+  .app-shell {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(246, 248, 252, 0.85) 60%, rgba(241, 245, 249, 0.9) 100%);
+  }
+
+  .page-content > * {
+    animation: fade-up 0.45s ease both;
+  }
+
+  .page-content > *:nth-child(2) {
+    animation-delay: 80ms;
+  }
+
+  .page-content > *:nth-child(3) {
+    animation-delay: 140ms;
+  }
+
+  .page-content > *:nth-child(4) {
+    animation-delay: 200ms;
+  }
+
+  .page-content > *:nth-child(5) {
+    animation-delay: 260ms;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

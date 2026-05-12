@@ -189,7 +189,7 @@ class ModelPerformanceResponse(BaseModel):
     transformer_gini:         float | None = None
 
     # Segment distribution
-    segment_distribution:     dict[str, int] = Field(default_factory=dict)
+    segment_distribution:     dict[str, int] = Field(default_factory=lambda: {})
 
     # Coverage
     n_customers_scored:       int | None = None
@@ -209,15 +209,15 @@ class HubSpotWebhookPayload(BaseModel):
     company_size:   str | None = None
     plan_tier:      str | None = None
     channel:        str | None = None
-    properties:     dict[str, Any] = Field(default_factory=dict)
+    properties:     dict[str, Any] = Field(default_factory=lambda: {})
 
 
 class SegmentWebhookPayload(BaseModel):
     """Segment.io identify event payload."""
     user_id:    str
     anonymous_id: str | None = None
-    traits:     dict[str, Any] = Field(default_factory=dict)
-    context:    dict[str, Any] = Field(default_factory=dict)
+    traits:     dict[str, Any] = Field(default_factory=lambda: {})
+    context:    dict[str, Any] = Field(default_factory=lambda: {})
 
 
 class WebhookResponse(BaseModel):
