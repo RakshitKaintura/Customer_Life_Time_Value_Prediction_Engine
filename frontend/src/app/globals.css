@@ -1,36 +1,69 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@config "../../tailwind.config.js";
+@import "tailwindcss";
 
 @layer base {
   :root {
-    --background: 246 248 252;
-    --foreground: 12 20 33;
-    --card: 255 255 255;
-    --border: 226 232 240;
-    --ring: 14 116 144;
-    --brand: 14 116 144;
-    --brand-ink: 10 40 58;
-    --accent: 245 158 11;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 7%;
+    --primary: 0 0% 7%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 7%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 0% 94%;
+    --accent-foreground: 0 0% 7%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 0 0% 60%;
+    --chart-1: 0 0% 10%;
+    --chart-2: 0 0% 26%;
+    --chart-3: 0 0% 44%;
+    --chart-4: 0 0% 62%;
+    --radius: 16px;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%;
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 63%;
+    --accent: 0 0% 12%;
+    --accent-foreground: 0 0% 100%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 0 0% 70%;
+    --chart-1: 0 0% 96%;
+    --chart-2: 0 0% 76%;
+    --chart-3: 0 0% 58%;
+    --chart-4: 0 0% 42%;
   }
 
   * {
-    @apply border-slate-200;
+    @apply border-border;
   }
 
   body {
-    font-family: var(--font-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-    background:
-      radial-gradient(900px 480px at 8% -10%, rgba(14, 116, 144, 0.14), transparent 60%),
-      radial-gradient(900px 520px at 92% 0%, rgba(245, 158, 11, 0.12), transparent 55%),
-      #f6f8fc;
-    @apply text-slate-900 antialiased;
+    font-family: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    @apply bg-background text-foreground antialiased transition-colors duration-200;
   }
 
   h1,
   h2,
   h3 {
-    font-family: var(--font-display), "Times New Roman", serif;
+    font-family: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   }
 
   /* Custom scrollbar */
@@ -41,10 +74,10 @@
     @apply bg-transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-slate-300;
+    @apply rounded-full bg-muted;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-slate-400;
+    @apply bg-accent;
   }
 }
 
@@ -54,7 +87,7 @@
   }
 
   .page-content {
-    @apply mx-auto flex-1 w-full max-w-[1200px] p-6;
+    @apply mx-auto flex-1 w-full max-w-7xl p-4 sm:p-6;
   }
 
   .grid-cols-stats {
@@ -62,20 +95,19 @@
   }
 
   .section-title {
-    @apply mb-1 text-base font-semibold text-slate-900;
+    @apply mb-1 text-base font-semibold text-foreground;
   }
 
   .section-subtitle {
-    @apply text-sm text-slate-500;
+    @apply text-sm text-muted-foreground;
   }
 
   .chart-container {
-    @apply rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_12px_30px_-22px_rgba(15,23,42,0.45)] backdrop-blur-sm;
+    @apply rounded-2xl border bg-card p-6 shadow-[0_16px_32px_-28px_rgba(0,0,0,0.5)]/40;
   }
 
   .app-shell {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(246, 248, 252, 0.85) 60%, rgba(241, 245, 249, 0.9) 100%);
+    @apply bg-background;
   }
 
   .page-content > * {

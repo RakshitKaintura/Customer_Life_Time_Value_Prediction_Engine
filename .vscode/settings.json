@@ -3,5 +3,8 @@
   "python.analysis.extraPaths": ["${workspaceFolder}"],
   "python.languageServer": "Pylance",
   "python.analysis.typeCheckingMode": "basic",
-  "pyrefly.pythonInterpreter": "${workspaceFolder}\\.venv\\Scripts\\python.exe"
+  "pyrefly.pythonInterpreter": "${workspaceFolder}\\.venv\\Scripts\\python.exe",
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "less.lint.unknownAtRules": "ignore"
 }

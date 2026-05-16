@@ -30,7 +30,7 @@ export function SegmentPieChart({ data }: Props) {
     <div className="chart-container">
       <CardHeader>
         <CardTitle>Customer Count by Segment</CardTitle>
-        <span className="text-xs text-slate-400">LTV 36m segments</span>
+        <span className="text-xs text-muted-foreground">LTV 36m segments</span>
       </CardHeader>
       <ResponsiveContainer width="100%" height={280}>
         <PieChart>
@@ -52,18 +52,24 @@ export function SegmentPieChart({ data }: Props) {
               `${v.toLocaleString()} customers`,
               `Avg LTV: ${formatCurrency(p.payload?.avg_ltv ?? 0)}`,
             ]}
-            contentStyle={{ fontSize: 12, borderRadius: 8 }}
+            contentStyle={{
+              fontSize: 12,
+              borderRadius: 8,
+              backgroundColor: "hsl(var(--card))",
+              borderColor: "hsl(var(--border))",
+              color: "hsl(var(--foreground))",
+            }}
           />
           <Legend
             formatter={(value) => (
-              <span style={{ fontSize: 12, color: "#64748b" }}>{value}</span>
+              <span style={{ fontSize: 12, color: "hsl(var(--muted-foreground))" }}>{value}</span>
             )}
           />
         </PieChart>
       </ResponsiveContainer>
 
       {/* Revenue share table */}
-      <div className="mt-4 space-y-2 border-t border-slate-100 pt-4">
+      <div className="mt-4 space-y-2 border-t border-border pt-4">
         {chartData.map((d) => (
           <div key={d.segment} className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2">
@@ -71,11 +77,11 @@ export function SegmentPieChart({ data }: Props) {
                 className="inline-block h-2.5 w-2.5 rounded-full"
                 style={{ backgroundColor: d.color }}
               />
-              <span className="text-slate-600">{d.name}</span>
+              <span className="text-muted-foreground">{d.name}</span>
             </div>
             <div className="flex gap-4 text-right">
-              <span className="text-slate-400">{d.n_customers.toLocaleString()}</span>
-              <span className="w-16 font-medium text-slate-900">
+              <span className="text-muted-foreground">{d.n_customers.toLocaleString()}</span>
+              <span className="w-16 font-medium text-foreground">
                 {d.pct_revenue.toFixed(1)}% rev
               </span>
             </div>

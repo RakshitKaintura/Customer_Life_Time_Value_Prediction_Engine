@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Lifetime Value Prediction Engine</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #e0e0e0;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header / Hero */
+        header {
+            background: linear-gradient(135deg, #1a1f3a 0%, #0d1117 100%);
+            color: white;
+            padding: 60px 0;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            border-bottom: 2px solid #ff6b35;
+        }
+
+        header h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        header p {
+            font-size: 1.3em;
+            margin-bottom: 30px;
+            opacity: 0.95;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .badge-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .badge {107, 53, 0.15);
+            color: #ff6b35;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            border: 1px solid #ff6b35
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Main content */
+        main {
+            background: linear-gradient(to bottom, #0a0e27 0%, #0d1117 100%);
+            padding: 80px 0;
+        }
+
+        section {
+            margin-bottom: 100px;
+        }
+
+        .section-title {
+            font-size: 2.5em;
+            margin-bottom: 50px;
+            text-align: center;
+            color: #ff6b35;
+            font-weight: 700;
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+
+        .feature-card {
+            background: rgba(255, 107, 53, 0.08);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #ff6b35;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(255, 107, 53, 0.3);
+            background: rgba(255, 107, 53, 0.15);
+        }
+
+        .feature-card h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #ff6b35;
+        }
+
+        .feature-card p {
+            color: #b0b0b0;
+            line-height: 1.8;
+        }
+
+        /* Architecture */
+        .architecture {rgba(255, 107, 53, 0.08);
+            padding: 60px;
+            border-radius: 12px;
+            margin-bottom: 60px;
+            border: 1px solid rgba(255, 107, 53, 0.2);
+        }
+
+        .architecture h3 {
+            font-size: 1.8em;
+            margin-bottom: 30px;
+            color: #ff6b35 30px;
+            color: #667eea;
+        }
+
+        .architecture-layers {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+rgba(255, 107, 53, 0.05);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 107, 53, 0.15);
+        }
+
+        .layer-title {
+            font-weight: 700;
+            color: #ff6b35;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .layer-items {
+            list-style: none;
+        }
+
+        .layer-items li {
+            padding: 8px 0;
+            color: #a0a0a0;
+            font-size: 0.95em;
+        }
+
+        .layer-items li:before {
+            content: "→ ";
+            color: #ff6b35fore {
+            content: "→ ";
+            color: #667eea;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        /* Components */
+        .components-showcase {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }rgba(255, 107, 53, 0.1);
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #ff6b35;
+            transition: all 0.3s;
+        }
+
+        .component-box:hover {
+            border-color: #ffa500;
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        .component-box h4 {
+            color: #ff6b35;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+        }
+
+        .component-box p {
+            font-size: 0.95em;
+            color: #b0b0b0
+        .component-box p {
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        /* Getting Startrgba(255, 107, 53, 0.08);
+            padding: 60px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 107, 53, 0.2);
+            padding: 60px;
+            border-radius: 12px;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 40px;
+        }
+
+        .step {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 60px;
+        }
+
+        .step:before {
+            content: counter(step-counter);
+            position: absff6b35;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.3em;
+        }
+
+        .step h4 {
+            margin-bottom: 10px;
+            color: #ffffff;
+            font-size: 1.2em;
+        }
+
+        .step p {
+            color: #b0b0b0
+
+        .step p {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .code-block {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            margin-top: 15px;
+            line-height: 1.5;
+        }
+
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+
+        .stat-box {
+            text-align: rgba(255, 107, 53, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 107, 53, 0.15);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #ff6b35;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #b0b0b0
+        .stat-label {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        /* Footer */
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 40px 0;
+            margin-top: 80px;
+        }
+
+        .footer-content {
+            margin-bottom: 20px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #667eea;
+        }
+
+        /* CTA Button */ff6b35 0%, #ffa500 100%);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.05em;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(255, 107, 53, 0.5
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .counter-context {
+            counter-reset: step-counter;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.5em;
+            }
+
+            header p {
+                font-size: 1.1em;
+            }
+
+            .section-title {
+                font-size: 1.8em;
+            }
+
+            .feature-card {
+                padding: 25px;
+            }
+
+            .architecture {
+                padding: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <h1>🎯 Customer Lifetime Value</h1>
+            <p>Production-Ready Prediction Engine Combining Probabilistic Models, Deep Learning & Causal Inference</p>
+            <div class="badge-container">
+                <span class="badge">🤖 Hybrid Modeling</span>
+                <span class="badge">⚡ FastAPI Service</span>
+                <span class="badge">📊 Real-time Scoring</span>
+                <span class="badge">🔒 Enterprise Ready</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            <!-- Highlights Section -->
+            <section>
+                <h2 class="section-title">Why This System?</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🎯 Hybrid Approach</h3>
+                        <p>Combines BG/NBD probabilistic models with Transformer neural networks and XGBoost fusion for best-in-class predictions across all customer segments.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>❄️ Cold-Start Ready</h3>
+                        <p>Intelligent firmographic prior lookups enable accurate LTV scoring for new customers without purchase history.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>⚙️ Production-Proven</h3>
+                        <p>FastAPI service with batch scoring, segment queries, and battle-tested integrations with Supabase, MongoDB, and cloud platforms.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔬 Causal Analysis</h3>
+                        <p>Integrated causal ML pipeline (DAGs, heterogeneous treatment effects) for understanding what drives value, not just predicting it.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📡 Real-Time Inference</h3>
+                        <p>ONNX-optimized models and embedding stores enable sub-millisecond LTV scores at scale.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🛡️ Monitoring & Drift</h3>
+                        <p>Built-in data drift detection, model performance monitoring, and automated retraining pipelines with Dagster orchestration.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Architecture Section -->
+            <section>
+                <h2 class="section-title">System Architecture</h2>
+                <div class="architecture">
+                    <h3>Layered Pipeline</h3>
+                    <div class="architecture-layers">
+                        <div class="layer">
+                            <div class="layer-title">📥 Data Layer</div>
+                            <ul class="layer-items">
+                                <li>Polars/DuckDB processing</li>
+                                <li>Raw transaction ingestion</li>
+                                <li>Data validation & cleaning</li>
+                                <li>Supabase integration</li>
+                            </ul>
+                        </div>
+                        <div class="layer">
+                            <div class="layer-title">🔧 Feature Engineering</div>
+                            <ul class="layer-items">
+                                <li>RFM cohort analysis</li>
+                                <li>Sequence tokenization</li>
+                                <li>Temporal splits (calib/holdout)</li>
+                                <li>Calibration datasets</li>
+                            </ul>
+                        </div>
+                        <div class="layer">
+                            <div class="layer-title">🧠 ML Models</div>
+                            <ul class="layer-items">
+                                <li>BG/NBD probabilistic</li>
+                                <li>Transformer encoder</li>
+                                <li>XGBoost fusion</li>
+                                <li>Causal inference</li>
+                            </ul>
+                        </div>
+                        <div class="layer">
+                            <div class="layer-title">🚀 Serving Layer</div>
+                            <ul class="layer-items">
+                                <li>FastAPI endpoints</li>
+                                <li>Batch scoring workers</li>
+                                <li>Real-time predictions</li>
+                                <li>Segment queries</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Components Showcase -->
+            <section>
+                <h2 class="section-title">Core Components</h2>
+                <div class="components-showcase">
+                    <div class="component-box">
+                        <h4>📊 Probabilistic Models</h4>
+                        <p><strong>BG/NBD & Gamma-Gamma:</strong> Classical buy-till-you-die models for repeat purchase & monetary value prediction with proper uncertainty quantification.</p>
+                    </div>
+                    <div class="component-box">
+                        <h4>🤖 Deep Learning</h4>
+                        <p><strong>Transformer Models:</strong> Sequence-to-value architecture capturing purchase patterns. ONNX-exportable for edge deployment.</p>
+                    </div>
+                    <div class="component-box">
+                        <h4>🔗 Causal ML</h4>
+                        <p><strong>DAG & Heterogeneous Effects:</strong> Understand which marketing interventions actually drive customer value using causal graphs.</p>
+                    </div>
+                    <div class="component-box">
+                        <h4>🌐 Integration Hub</h4>
+                        <p><strong>HubSpot, Google Ads, Meta:</strong> Seamless connectors for CRM, ad platform, and external data enrichment.</p>
+                    </div>
+                    <div class="component-box">
+                        <h4>⚡ Embedding Store</h4>
+                        <p><strong>Vector DB:</strong> Fast semantic similarity lookups for finding similar customers and firmographic cohorts.</p>
+                    </div>
+                    <div class="component-box">
+                        <h4>🔍 Observability</h4>
+                        <p><strong>Monitoring & Drift:</strong> Automated performance tracking, data drift alerts, and explainability dashboards with SHAP.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stats -->
+            <section>
+                <h2 class="section-title">Project Scale</h2>
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-number">15+</div>
+                        <div class="stat-label">ML Models</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">45+</div>
+                        <div class="stat-label">Test Suites</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">4</div>
+                        <div class="stat-label">Deployment Targets</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">8</div>
+                        <div class="stat-label">Integrations</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Getting Started -->
+            <section>
+                <h2 class="section-title">Quick Start</h2>
+                <div class="getting-started counter-context">
+                    <div class="steps">
+                        <div class="step">
+                            <h4>Clone & Setup</h4>
+                            <p>Clone repository and create Python 3.11 virtual environment</p>
+                            <div class="code-block">uv venv --python 3.11
+.venv\Scripts\Activate.ps1
+uv pip install -e "[ml]"</div>
+                        </div>
+                        <div class="step">
+                            <h4>Configure Environment</h4>
+                            <p>Set up required environment variables in <code>.env</code> file</p>
+                            <div class="code-block">SUPABASE_URL=your_url
+SUPABASE_SERVICE_ROLE_KEY=your_key
+DATABASE_URL=postgres://...</div>
+                        </div>
+                        <div class="step">
+                            <h4>Run API Server</h4>
+                            <p>Start the FastAPI development server with auto-reload</p>
+                            <div class="code-block">uvicorn backend.api.main:app --reload</div>
+                        </div>
+                        <div class="step">
+                            <h4>Access & Explore</h4>
+                            <p>Open interactive API docs and explore available endpoints</p>
+                            <div class="code-block">http://localhost:8000/docs</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Features List -->
+            <section>
+                <h2 class="section-title">Key Features</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>✅ Comprehensive Testing</h3>
+                        <p>45+ test suites covering models, APIs, data pipelines, and integrations. CI/CD ready.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📈 Explainability</h3>
+                        <p>SHAP values, feature importance, and model interpretability built-in for stakeholder communication.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🚢 Containerized</h3>
+                        <p>Docker-ready with compose setup for local dev and production deployment on Render or cloud platforms.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔄 Orchestration</h3>
+                        <p>Dagster asset graph for reproducible, observable data pipelines with dependency management.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📚 Notebooks</h3>
+                        <p>6 comprehensive Jupyter notebooks covering EDA, model development, validation, and causal analysis.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎯 Segment Queries</h3>
+                        <p>SQL-powered cohort queries for high-value, at-risk, and dormant customer segments.</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <h3 style="margin-bottom: 20px;">Customer Lifetime Value Prediction Engine</h3>
+                <p>A production-grade machine learning system combining probabilistic models, deep learning, and causal inference for enterprise customer analytics.</p>
+            </div>
+            <div class="footer-links">
+                <a href="./README.md">📖 Documentation</a>
+                <a href="#backend">🔧 Backend API</a>
+                <a href="#notebooks">📓 Notebooks</a>
+                <a href="#tests">✅ Tests</a>
+            </div>
+            <div style="border-top: 1px solid #444; padding-top: 20px; margin-top: 20px;">
+                <p style="font-size: 0.9em; opacity: 0.8;">Built with ❤️ | Python 3.11 | FastAPI • Polars • PyTorch • Scikit-learn • Dagster</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

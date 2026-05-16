@@ -38,7 +38,7 @@ export function LTVDistributionChart({ data }: Props) {
     <div className="chart-container">
       <CardHeader>
         <CardTitle>LTV 36m Distribution</CardTitle>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-muted-foreground">
           {values.length.toLocaleString()} customers (p99 capped)
         </span>
       </CardHeader>
@@ -46,20 +46,26 @@ export function LTVDistributionChart({ data }: Props) {
         <BarChart data={histogram} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
           <XAxis
             dataKey="range"
-            tick={{ fontSize: 10, fill: "#94a3b8" }}
+            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
             interval={4}
           />
-          <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} />
+          <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
           <Tooltip
             formatter={(v: number) => [v.toLocaleString(), "Customers"]}
             labelFormatter={(l) => `LTV range: ${l}`}
-            contentStyle={{ fontSize: 12, borderRadius: 8 }}
+            contentStyle={{
+              fontSize: 12,
+              borderRadius: 8,
+              backgroundColor: "hsl(var(--card))",
+              borderColor: "hsl(var(--border))",
+              color: "hsl(var(--foreground))",
+            }}
           />
           <Bar dataKey="count" radius={[2, 2, 0, 0]}>
             {histogram.map((_, i) => (
               <Cell
                 key={i}
-                fill={i < 5 ? "#94a3b8" : i < 15 ? "#60a5fa" : "#6366f1"}
+                fill={i < 5 ? "hsl(var(--chart-4))" : i < 15 ? "hsl(var(--chart-3))" : "hsl(var(--chart-2))"}
               />
             ))}
           </Bar>

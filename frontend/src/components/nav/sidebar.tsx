@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 import {
   LayoutDashboard,
   Users,
@@ -12,9 +13,17 @@ import {
   Activity,
   TrendingUp,
   Zap,
+  Sparkles,
+  LogOut,
 } from "lucide-react";
 
 const navItems = [
+  {
+    href:  "/welcome",
+    label: "Welcome",
+    icon:  Sparkles,
+    description: "Project overview & quick start",
+  },
   {
     href:  "/",
     label: "LTV Overview",
@@ -55,17 +64,24 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/welcome");
+  };
 
   return (
-    <aside className="flex h-screen w-72 flex-col border-r border-slate-200/70 bg-white/70 backdrop-blur">
+    <aside className="flex h-screen w-72 flex-col border-r border-border bg-background/80 backdrop-blur">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b border-slate-200/70 px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-teal-500 to-slate-900 shadow-[0_8px_16px_-10px_rgba(15,23,42,0.5)]">
-          <Zap className="h-4 w-4 text-white" />
+      <div className="flex h-16 items-center gap-3 border-b border-border px-6">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-foreground">
+          <Zap className="h-4 w-4 text-background" />
         </div>
         <div>
-          <p className="text-sm font-semibold tracking-tight text-slate-900">LTV Engine</p>
-          <p className="text-xs text-slate-500">Prediction Dashboard</p>
+          <p className="text-sm font-semibold tracking-tight text-foreground">LTV Engine</p>
+          <p className="text-xs text-muted-foreground">Prediction Dashboard</p>
         </div>
       </div>
 
@@ -82,14 +98,14 @@ export function Sidebar() {
                   className={cn(
                     "group flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition-all",
                     active
-                      ? "bg-teal-600/95 text-white shadow-[0_10px_24px_-18px_rgba(15,23,42,0.7)] ring-1 ring-teal-500/40"
-                      : "text-slate-700 hover:bg-white/70 hover:text-slate-900"
+                      ? "bg-foreground text-background shadow-[0_12px_24px_-20px_rgba(0,0,0,0.55)]"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   )}
                 >
                   <Icon
                     className={cn(
                       "h-4 w-4 shrink-0",
-                      active ? "text-white" : "text-slate-400 group-hover:text-slate-700"
+                      active ? "text-background" : "text-muted-foreground group-hover:text-foreground"
                     )}
                   />
                   <div className="min-w-0 flex-1">
@@ -97,7 +113,7 @@ export function Sidebar() {
                     <p
                       className={cn(
                         "truncate text-xs",
-                        active ? "text-teal-100" : "text-slate-400"
+                        active ? "text-background/70" : "text-muted-foreground"
                       )}
                     >
                       {item.description}
@@ -111,10 +127,18 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-slate-200/70 p-4">
-        <div className="flex items-center gap-2 rounded-xl bg-white/70 p-3 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.45)]">
-          <div className="h-2 w-2 rounded-full bg-emerald-500" />
-          <p className="text-xs text-slate-600">API connected</p>
+      <div className="border-t border-border p-4">
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+        >
+          <LogOut className="h-4 w-4" />
+          Sign Out
+        </button>
+        <div className="flex items-center gap-2 rounded-xl border border-border bg-card p-3">
+          <div className="h-2 w-2 rounded-full bg-foreground" />
+          <p className="text-xs text-muted-foreground">API connected</p>
         </div>
       </div>
     </aside>

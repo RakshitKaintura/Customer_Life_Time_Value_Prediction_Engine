@@ -26,7 +26,8 @@ from backend.api.middleware import (
     RequestLoggingMiddleware,
     configure_cors,
 )
-from backend.api.routers import health, scoring, webhooks
+from backend.api.routers import health, scoring, webhooks, welcome
+from backend.api.routers.auth import router as auth_router
 from backend.api.startup import lifespan
 
 # ─────────────────────────────────────────────────────────────
@@ -63,6 +64,8 @@ app.add_middleware(
 # Routers
 # ─────────────────────────────────────────────────────────────
 
+app.include_router(auth_router)
+app.include_router(welcome.router)
 app.include_router(scoring.router)
 app.include_router(health.router)
 app.include_router(webhooks.router)

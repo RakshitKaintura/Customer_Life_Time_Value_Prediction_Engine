@@ -6,7 +6,7 @@ import {
 } from "recharts";
 import { CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-
+import { chartAxisTick, chartGridStroke, chartTooltipStyle } from "@/components/ui/chart-theme";
 interface CohortRow {
   cohort_month: string;
   customers?: number;
@@ -19,11 +19,6 @@ interface CohortRow {
 interface Props {
   data: CohortRow[];
 }
-
-const COLORS = [
-  "#6366f1", "#3b82f6", "#06b6d4", "#10b981",
-  "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899",
-];
 
 export function CohortLTVChart({ data }: Props) {
   const chartData = data.map(row => ({
@@ -38,22 +33,22 @@ export function CohortLTVChart({ data }: Props) {
     <div className="chart-container lg:col-span-2">
       <CardHeader>
         <CardTitle>Average LTV by Acquisition Cohort</CardTitle>
-        <span className="text-xs text-slate-400">Predicted 36m vs Actual 12m LTV</span>
+        <span className="text-xs text-muted-foreground">Predicted 36m vs Actual 12m LTV</span>
       </CardHeader>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-          <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} />
+          <XAxis dataKey="month" tick={chartAxisTick} />
           <YAxis
             tickFormatter={(v) => formatCurrency(v)}
-            tick={{ fontSize: 10, fill: "#94a3b8" }}
+            tick={chartAxisTick}
           />
           <Tooltip
             formatter={(v: number, name: string) => [
               formatCurrency(v),
               name === "predictedLTV" ? "Predicted LTV 36m" : "Actual LTV 12m",
             ]}
-            contentStyle={{ fontSize: 12, borderRadius: 8 }}
+            contentStyle={chartTooltipStyle}
           />
           <Legend
             formatter={(v) =>
@@ -63,7 +58,7 @@ export function CohortLTVChart({ data }: Props) {
           <Line
             type="monotone"
             dataKey="predictedLTV"
-            stroke="#6366f1"
+            stroke="hsl(var(--chart-1))"
             strokeWidth={2}
             dot={{ r: 3 }}
             name="predictedLTV"
@@ -71,7 +66,7 @@ export function CohortLTVChart({ data }: Props) {
           <Line
             type="monotone"
             dataKey="actualLTV12m"
-            stroke="#10b981"
+            stroke="hsl(var(--chart-3))"
             strokeWidth={2}
             strokeDasharray="4 4"
             dot={{ r: 3 }}

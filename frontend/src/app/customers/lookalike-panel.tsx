@@ -8,37 +8,50 @@ import { formatCurrency } from "@/lib/utils";
 import { ltvApi } from "@/lib/api";
 
 interface Props {
-  customerId:        string;
+  customerId: string;
   initialLookalikes: string[];
 }
 
 interface LookalikeData {
   candidate_customer_id: string;
-  similarity:            number;
-  ltv_36m:               number;
-  segment:               string;
+  similarity: number;
+  ltv_36m: number;
+  segment: string;
 }
 
 export function LookalikePanel({ customerId, initialLookalikes }: Props) {
   const [lookalikes, setLookalikes] = useState<LookalikeData[]>([]);
-  const [loading,    setLoading]    = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!customerId) return;
-    setLoading(true);
-    ltvApi
-      .getLookalikes(customerId, 10)
-      .then(res => setLookalikes(res.lookalikes as unknown as LookalikeData[]))
-      .catch(() => setLookalikes([]))
-      .finally(() => setLoading(false));
+    let isActive = true;
+    Promise.resolve().then(() => {
+      if (!isActive) return;
+      setLoading(true);
+      ltvApi
+        .getLookalikes(customerId, 10)
+        .then((res) => {
+          if (isActive) setLookalikes(res.lookalikes as unknown as LookalikeData[]);
+        })
+        .catch(() => {
+          if (isActive) setLookalikes([]);
+        })
+        .finally(() => {
+          if (isActive) setLoading(false);
+        });
+    });
+    return () => {
+      isActive = false;
+    };
   }, [customerId]);
 
   if (loading) {
     return (
       <Card>
-        <div className="flex items-center gap-2 py-4 text-slate-400">
+        <div className="flex items-center gap-2 py-4 text-muted-foreground">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Loading lookalike customers…</span>
+          <span className="text-sm text-muted-foreground">Loading lookalike customers...</span>
         </div>
       </Card>
     );
@@ -52,43 +65,32 @@ export function LookalikePanel({ customerId, initialLookalikes }: Props) {
     <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-blue-500" />
+          <Users className="h-4 w-4 text-foreground" />
           <CardTitle>Lookalike Customers</CardTitle>
         </div>
-        <span className="text-xs text-slate-400">
-          Most similar existing customers (pgvector ANN)
-        </span>
+        <span className="text-xs text-muted-foreground">Most similar existing customers (pgvector ANN)</span>
       </CardHeader>
       <div className="space-y-2">
         {lookalikes.length > 0 ? (
           lookalikes.map((l) => (
             <div
               key={l.candidate_customer_id}
-              className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2"
+              className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2"
             >
               <div className="flex items-center gap-3">
-                <span className="font-mono text-sm text-blue-600">
-                  {l.candidate_customer_id}
-                </span>
+                <span className="font-mono text-sm text-foreground">{l.candidate_customer_id}</span>
                 <SegmentBadge segment={l.segment} size="sm" />
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <span className="text-slate-500">
-                  {(Number(l.similarity) * 100).toFixed(1)}% similar
-                </span>
-                <span className="font-medium text-slate-900">
-                  {formatCurrency(Number(l.ltv_36m))}
-                </span>
+                <span className="text-muted-foreground">{(Number(l.similarity) * 100).toFixed(1)}% similar</span>
+                <span className="font-medium text-foreground">{formatCurrency(Number(l.ltv_36m))}</span>
               </div>
             </div>
           ))
         ) : (
           initialLookalikes.slice(0, 5).map((id) => (
-            <div
-              key={id}
-              className="flex items-center gap-2 rounded-lg bg-slate-50 px-3 py-2"
-            >
-              <span className="font-mono text-sm text-blue-600">{id}</span>
+            <div key={id} className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2">
+              <span className="font-mono text-sm text-foreground">{id}</span>
             </div>
           ))
         )}

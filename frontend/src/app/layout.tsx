@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
-import { Fraunces, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/nav/sidebar";
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-display",
-});
+import { AuthProvider } from "@/lib/auth-context";
+import { LayoutWrapper } from "@/components/layout-wrapper";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   title: "LTV Prediction Dashboard",
@@ -23,14 +15,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className={`${spaceGrotesk.variable} ${fraunces.variable}`}>
-        <div className="flex h-screen overflow-hidden">
-          <Sidebar />
-          <main className="app-shell flex flex-1 flex-col overflow-hidden">
-            {children}
-          </main>
-        </div>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,4 +1,5 @@
 import { Bell, RefreshCw } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface TopbarProps {
   title: string;
@@ -8,20 +9,21 @@ interface TopbarProps {
 
 export function Topbar({ title, subtitle, actions }: TopbarProps) {
   return (
-    <header className="flex h-16 items-center justify-between border-b border-slate-200/70 bg-white/75 px-6 backdrop-blur">
+    <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-3 sm:px-6 backdrop-blur">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900">{title}</h1>
+        <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">{title}</h1>
         {subtitle && (
-          <p className="text-sm text-slate-500">{subtitle}</p>
+          <p className="text-xs text-muted-foreground sm:text-sm">{subtitle}</p>
         )}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {actions}
-        <button className="flex items-center gap-1.5 rounded-lg border border-slate-200/80 bg-white/80 px-3 py-1.5 text-sm text-slate-700 shadow-[0_10px_20px_-18px_rgba(15,23,42,0.5)] transition hover:-translate-y-0.5 hover:border-teal-200 hover:text-slate-900">
+        <button className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground shadow-[0_10px_20px_-18px_rgba(0,0,0,0.35)] transition hover:-translate-y-0.5 hover:text-foreground sm:flex">
           <RefreshCw className="h-3.5 w-3.5" />
           Refresh
         </button>
-        <button className="relative rounded-lg border border-transparent p-2 text-slate-500 transition hover:border-slate-200/70 hover:bg-white/70">
+        <ThemeToggle />
+        <button className="relative rounded-lg border border-transparent p-2 text-muted-foreground transition hover:border-border hover:bg-accent">
           <Bell className="h-4 w-4" />
         </button>
       </div>

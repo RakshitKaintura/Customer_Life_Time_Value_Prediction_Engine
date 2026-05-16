@@ -41,22 +41,22 @@ export function StatCard({
     <Card className={cn("relative overflow-hidden", className)}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm font-medium text-slate-500">{title}</p>
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
           {loading ? (
-            <div className="mt-2 h-8 w-24 animate-pulse rounded bg-slate-200" />
+            <div className="mt-2 h-8 w-24 animate-pulse rounded bg-muted" />
           ) : (
-            <p className="mt-1 text-2xl font-bold text-slate-900">{formatted}</p>
+            <p className="mt-1 text-2xl font-bold text-foreground">{formatted}</p>
           )}
           {subtitle && (
-            <p className="mt-1 text-xs text-slate-400">{subtitle}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{subtitle}</p>
           )}
           {trend !== undefined && (
             <div
               className={cn(
                 "mt-2 flex items-center gap-1 text-xs font-medium",
-                trendPositive && "text-green-600",
-                trendNegative && "text-red-500",
-                !trendPositive && !trendNegative && "text-slate-400"
+                trendPositive && "text-foreground",
+                trendNegative && "text-muted-foreground",
+                !trendPositive && !trendNegative && "text-muted-foreground"
               )}
             >
               {trendPositive && <TrendingUp className="h-3 w-3" />}
@@ -70,7 +70,7 @@ export function StatCard({
           )}
         </div>
         {icon && (
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-secondary text-foreground">
             {icon}
           </div>
         )}

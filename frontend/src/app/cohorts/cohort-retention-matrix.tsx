@@ -7,11 +7,11 @@ interface Props {
 }
 
 function getColor(pct: number): string {
-  if (pct >= 80) return "bg-green-600 text-white";
-  if (pct >= 60) return "bg-green-400 text-white";
-  if (pct >= 40) return "bg-yellow-300 text-slate-800";
-  if (pct >= 20) return "bg-orange-300 text-slate-800";
-  return "bg-red-200 text-slate-700";
+  if (pct >= 80) return "bg-foreground text-background";
+  if (pct >= 60) return "bg-muted text-foreground";
+  if (pct >= 40) return "bg-accent text-foreground";
+  if (pct >= 20) return "bg-card text-muted-foreground border border-border";
+  return "bg-card text-muted-foreground border border-border";
 }
 
 export function CohortRetentionMatrix({ data }: Props) {
@@ -21,7 +21,7 @@ export function CohortRetentionMatrix({ data }: Props) {
         <CardHeader>
           <CardTitle>Cohort Retention Matrix</CardTitle>
         </CardHeader>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-muted-foreground">
           Retention data will appear here after RFM pipeline runs.
         </p>
       </div>
@@ -45,18 +45,18 @@ export function CohortRetentionMatrix({ data }: Props) {
     <div className="chart-container overflow-x-auto">
       <CardHeader>
         <CardTitle>Cohort Retention Matrix</CardTitle>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-muted-foreground">
           % of each cohort still purchasing at month N
         </span>
       </CardHeader>
       <table className="min-w-full text-xs">
         <thead>
           <tr>
-            <th className="pb-2 pr-3 text-left font-medium text-slate-500 whitespace-nowrap">
+            <th className="pb-2 pr-3 text-left font-medium text-muted-foreground whitespace-nowrap">
               Cohort
             </th>
             {months.map(m => (
-              <th key={m} className="pb-2 px-1 text-center font-medium text-slate-500 whitespace-nowrap">
+              <th key={m} className="pb-2 px-1 text-center font-medium text-muted-foreground whitespace-nowrap">
                 M+{m}
               </th>
             ))}
@@ -65,7 +65,7 @@ export function CohortRetentionMatrix({ data }: Props) {
         <tbody>
           {cohorts.map(cohort => (
             <tr key={cohort}>
-              <td className="py-1 pr-3 font-mono text-slate-600 whitespace-nowrap">
+              <td className="py-1 pr-3 font-mono text-muted-foreground whitespace-nowrap">
                 {cohort}
               </td>
               {months.map(m => {
@@ -79,7 +79,7 @@ export function CohortRetentionMatrix({ data }: Props) {
                         {pct.toFixed(0)}%
                       </div>
                     ) : (
-                      <div className="mx-auto flex h-7 w-10 items-center justify-center rounded bg-slate-50 text-slate-300">
+                      <div className="mx-auto flex h-7 w-10 items-center justify-center rounded border border-border bg-card text-muted-foreground">
                         —
                       </div>
                     )}

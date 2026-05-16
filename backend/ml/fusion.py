@@ -93,6 +93,8 @@ def build_meta_features(
 
     Returns Polars DataFrame with columns: customer_id + META_FEATURES
     """
+    import numpy as np
+    
     # Rename columns to avoid conflicts
     bgnbd = bgnbd_preds.select([
         "customer_id",
@@ -128,6 +130,17 @@ def build_meta_features(
         .join(transformer, on="customer_id", how="inner")
         .join(rfm,         on="customer_id", how="left")
     )
+
+    # Replace inf/nan with 0 in model predictions (XGBoost cannot handle inf)
+    ltv_cols = ["bgnbd_ltv_12m", "bgnbd_ltv_36m", "transformer_ltv_12m", "transformer_ltv_36m"]
+    for col in ltv_cols:
+        if col in meta.columns:
+            meta = meta.with_columns(
+                pl.col(col).map_elements(
+                    lambda x: 0.0 if x is None or (isinstance(x, float) and not np.isfinite(x)) else x,
+                    return_dtype=pl.Float64
+                )
+            )
 
     # Fill any remaining nulls
     fill_zero_cols = [

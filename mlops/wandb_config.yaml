@@ -1,0 +1,65 @@
+# ============================================================
+# W&B Configuration for LTV Prediction Engine
+# ============================================================
+
+project: ltv-prediction
+entity:  ""   # fill in your W&B username or team
+
+# Default sweep config for BG/NBD hyperparameter tuning
+sweeps:
+  bgnbd_penalizer:
+    name:    bgnbd_penalizer_sweep
+    method:  bayes
+    metric:
+      name: gini_coefficient
+      goal: maximize
+    parameters:
+      penalizer_coef:
+        distribution: log_uniform_values
+        min:          0.0001
+        max:          1.0
+
+  transformer_arch:
+    name:    transformer_architecture_sweep
+    method:  bayes
+    metric:
+      name: val_loss
+      goal: minimize
+    parameters:
+      n_layers:
+        values: [2, 4, 6]
+      n_heads:
+        values: [4, 8]
+      ffn_dim:
+        values: [128, 256, 512]
+      dropout:
+        distribution: uniform
+        min:          0.05
+        max:          0.30
+      learning_rate:
+        distribution: log_uniform_values
+        min:          0.0001
+        max:          0.01
+
+# Alerts
+alerts:
+  drift_threshold_psi:        0.15
+  performance_degradation_pct: 10.0
+  min_gini_threshold:         0.60
+
+# Model registry
+registry:
+  bgnbd_alias:       bgnbd_production
+  transformer_alias: transformer_production
+  fusion_alias:      fusion_production
+
+# Tags used throughout the project
+tags:
+  week1: [data_engineering, rfm, cohort]
+  week2: [bgnbd, gamma_gamma, probabilistic]
+  week3: [transformer, pytorch, onnx]
+  week4: [causal, dml, cold_start]
+  week5: [fusion, xgboost, shap]
+  week6: [fastapi, api, serving]
+  week7: [dashboard, nextjs]
+  week8: [orchestration, monitoring, drift, retraining]

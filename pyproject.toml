@@ -8,97 +8,90 @@ license = { text = "MIT" }
 
 dependencies = [
     # ── Data Engineering ─────────────────────────────────────
-    "polars",
-    "duckdb",
-    "pyarrow",
-    "numpy",
-    "pandas",
+    "polars>=0.20.16",
+    "duckdb>=0.10.2",
+    "pyarrow>=15.0.0",
+    "numpy>=1.26.4",
+    "pandas>=2.2.1",
 
     # ── Database ─────────────────────────────────────────────
-    "supabase",
-    "sqlalchemy",
-    "psycopg2-binary",
-    "asyncpg",
-    "pgvector",
-    "alembic",
+    "supabase>=2.4.2",
+    "sqlalchemy>=2.0.29",
+    "psycopg2-binary>=2.9.9",
+    "asyncpg>=0.29.0",
+    "pgvector>=0.2.5",
 
-    # ── ML core (Phases 1–2) ──────────────────────────────────
-    "scikit-learn",
-    "lifetimes",
-    "scipy",
+    # ── ML core ──────────────────────────────────────────────
+    "scikit-learn>=1.4.1",
+    "lifetimes>=0.11.3",
+    "scipy>=1.12.0",
 
-    # ── API / Validation ─────────────────────────────────────
-    "fastapi",
-    "pydantic",
-    "pydantic-settings",
-    "uvicorn[standard]",
-    "httpx",
+    # ── API ──────────────────────────────────────────────────
+    "fastapi>=0.110.0",
+    "pydantic>=2.6.4",
+    "pydantic-settings>=2.2.1",
+    "uvicorn[standard]>=0.29.0",
+    "httpx>=0.27.0",
 
-    # ── Observability / Tracking ─────────────────────────────
-    "wandb",
-    "loguru",
-    "rich",
+    # ── Observability ────────────────────────────────────────
+    "wandb>=0.16.6",
+    "loguru>=0.7.2",
+    "rich>=13.7.1",
 
     # ── Utilities ────────────────────────────────────────────
-    "python-dotenv",
-    "typer",
-    "tqdm",
-    "tenacity",
+    "python-dotenv>=1.0.1",
+    "typer>=0.12.0",
+    "tqdm>=4.66.2",
+    "tenacity>=8.2.3",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "jupyter",
-    "ipykernel",
-    "jupyterlab",
-    "matplotlib",
-    "seaborn",
-    "plotly",
-    "kaleido",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-cov",
-    "ruff",
-    "mypy",
-    "ipdb",
+    "jupyter>=1.0.0",
+    "ipykernel>=6.29.3",
+    "jupyterlab>=4.1.5",
+    "matplotlib>=3.8.4",
+    "seaborn>=0.13.2",
+    "plotly>=5.20.0",
+    "pytest>=8.1.1",
+    "pytest-asyncio>=0.23.6",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.4.1",
+    "mypy>=1.9.0",
 ]
 
 ml = [
-    "torch",
-    "onnx",
-    "onnxruntime",
-    "xgboost",
-    "optuna",
-    "shap",
+    "torch>=2.2.2",
+    "onnx>=1.16.0",
+    "onnxruntime>=1.17.3",
+    "xgboost>=2.0.3",
+    "optuna>=3.6.1",
+    "shap>=0.45.0",
 ]
 
 causal = [
-    "econml",
-    "dowhy",
+    "econml>=0.15.0",
+    "dowhy>=0.11.1",
 ]
 
 monitoring = [
-    "arize-phoenix",
+    "arize-phoenix>=3.0.0",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[dependency-groups]
-dev = [
-    "jupyter",
-    "ipykernel",
-    "ruff",
-    "pytest",
-    "pytest-asyncio",
+orchestration = [
+    "dagster>=1.8.0",
+    "dagster-webserver>=1.8.0",
 ]
 
 [tool.hatch.build.targets.wheel]
 packages = ["backend"]
 
+[build-system]
+requires      = ["hatchling"]
+build-backend = "hatchling.build"
+
 [tool.ruff]
-line-length = 100
+line-length    = 100
 target-version = "py311"
 select = ["E", "F", "I", "N", "W", "UP", "ANN"]
 ignore  = ["ANN101", "ANN102", "ANN401"]

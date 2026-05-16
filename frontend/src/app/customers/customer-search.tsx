@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 import { Search, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { ltvApi } from "@/lib/api";
 import { CustomerScoreCard } from "./customer-score-card";
 import { ColdStartForm } from "./cold-start-form";
+import { cn } from "@/lib/utils";
 
 export function CustomerSearch() {
   const [query,   setQuery]   = useState("");
@@ -32,24 +35,22 @@ export function CustomerSearch() {
   return (
     <div className="space-y-6">
       {/* Mode toggle */}
-      <div className="flex gap-2">
+      <div className="inline-flex rounded-lg border border-border bg-card p-1">
         <button
           onClick={() => { setMode("existing"); setResult(null); setError(null); }}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            mode === "existing"
-              ? "bg-blue-600 text-white"
-              : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-          }`}
+          className={cn(
+            "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+            mode === "existing" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+          )}
         >
           Existing Customer
         </button>
         <button
           onClick={() => { setMode("cold-start"); setResult(null); setError(null); }}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            mode === "cold-start"
-              ? "bg-blue-600 text-white"
-              : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-          }`}
+          className={cn(
+            "rounded-md px-4 py-2 text-sm font-medium transition-colors",
+            mode === "cold-start" ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
+          )}
         >
           New Customer (Cold Start)
         </button>
@@ -60,28 +61,27 @@ export function CustomerSearch() {
           {/* Search bar */}
           <div className="flex gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
                 type="text"
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && handleSearch()}
                 placeholder="Enter customer ID (e.g. 17850)"
-                className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="pl-10"
               />
             </div>
-            <button
+            <Button
               onClick={handleSearch}
               disabled={loading || !query.trim()}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               Score
-            </button>
+            </Button>
           </div>
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
               {error}
             </div>
           )}

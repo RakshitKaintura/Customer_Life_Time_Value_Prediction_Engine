@@ -796,6 +796,22 @@ class BGNBDModel:
         )
         logger.info("Saved BG/NBD params — model_version={}", self.model_version)
 
+    def _sanitize_prediction_value(self, v: Any) -> Any:
+        """Convert inf/nan to None for database compatibility."""
+        if v is None:
+            return None
+        try:
+            if isinstance(v, (float, np.floating)):
+                if np.isfinite(v):
+                    return float(v)
+                else:
+                    return None
+            elif isinstance(v, (int, np.integer)):
+                return int(v)
+        except (ValueError, TypeError):
+            pass
+        return v
+
     def save_predictions(
         self,
         predictions: pl.DataFrame,
@@ -810,13 +826,13 @@ class BGNBDModel:
         # Map column names to DB schema
         records = []
         for row in predictions.iter_rows(named=True):
-            expected_365 = row.get("expected_purchases_365d")
-            expected_180 = row.get("expected_purchases_180d")
-            expected_90 = row.get("expected_purchases_90d")
+            expected_365 = self._sanitize_prediction_value(row.get("expected_purchases_365d"))
+            expected_180 = self._sanitize_prediction_value(row.get("expected_purchases_180d"))
+            expected_90 = self._sanitize_prediction_value(row.get("expected_purchases_90d"))
 
             # Backward-compatible fallbacks when only yearly/2y/3y horizons exist.
             if expected_365 is None:
-                expected_365 = row.get("expected_purchases_730d")
+                expected_365 = self._sanitize_prediction_value(row.get("expected_purchases_730d"))
             if expected_180 is None and expected_365 is not None:
                 expected_180 = 0.5 * float(expected_365)
             if expected_90 is None and expected_365 is not None:
@@ -829,15 +845,15 @@ class BGNBDModel:
                 "expected_purchases_90d":   expected_90,
                 "expected_purchases_180d":  expected_180,
                 "expected_purchases_365d":  expected_365,
-                "probability_alive":        row.get("probability_alive"),
-                "expected_avg_profit":      row.get("expected_avg_profit"),
-                "ltv_12m":                  row.get("ltv_12m"),
-                "ltv_24m":                  row.get("ltv_24m"),
-                "ltv_36m":                  row.get("ltv_36m"),
-                "ltv_12m_lower":            row.get("ltv_12m_lower"),
-                "ltv_12m_upper":            row.get("ltv_12m_upper"),
-                "ltv_36m_lower":            row.get("ltv_36m_lower"),
-                "ltv_36m_upper":            row.get("ltv_36m_upper"),
+                "probability_alive":        self._sanitize_prediction_value(row.get("probability_alive")),
+                "expected_avg_profit":      self._sanitize_prediction_value(row.get("expected_avg_profit")),
+                "ltv_12m":                  self._sanitize_prediction_value(row.get("ltv_12m")),
+                "ltv_24m":                  self._sanitize_prediction_value(row.get("ltv_24m")),
+                "ltv_36m":                  self._sanitize_prediction_value(row.get("ltv_36m")),
+                "ltv_12m_lower":            self._sanitize_prediction_value(row.get("ltv_12m_lower")),
+                "ltv_12m_upper":            self._sanitize_prediction_value(row.get("ltv_12m_upper")),
+                "ltv_36m_lower":            self._sanitize_prediction_value(row.get("ltv_36m_lower")),
+                "ltv_36m_upper":            self._sanitize_prediction_value(row.get("ltv_36m_upper")),
                 "segment":                  row.get("segment") if "segment" in pred_cols else None,
             })
 

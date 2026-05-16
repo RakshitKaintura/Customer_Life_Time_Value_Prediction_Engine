@@ -13,6 +13,7 @@ __pycache__/
 venv/
 ENV/
 env/
+.python-version
 
 # Build / packaging
 build/
@@ -33,6 +34,7 @@ htmlcov/
 
 # Jupyter
 .ipynb_checkpoints/
+.jupyter_runtime/
 
 # IDE / editor
 .vscode/
@@ -55,6 +57,7 @@ data/interim/
 data/processed/
 artifacts/
 checkpoints/
+models/
 
 # ML experiment tracking
 wandb/
@@ -64,3 +67,22 @@ mlruns/
 *.db
 *.sqlite
 *.sqlite3
+
+# JavaScript / frontend
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Local orchestration/runtime state
+.dagster_home/
+dagster_home_local/
+.tmp_dagster_home_*/
+
+# Python/uv tool caches
+.uv-cache/
+
+# Temporary files
+tmp/
+temp/

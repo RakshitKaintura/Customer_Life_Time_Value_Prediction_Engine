@@ -6,6 +6,8 @@ import { ltvApi } from "@/lib/api";
 import { formatCurrency } from "@/lib/utils";
 import { SegmentBadge } from "@/components/ui/segment-badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
 
 const VERTICALS     = ["healthcare","fintech","ecommerce","saas","manufacturing","retail","education","other"];
 const COMPANY_SIZES = ["smb","mid_market","enterprise"];
@@ -51,33 +53,31 @@ export function ColdStartForm() {
           { label: "Plan Tier",            field: "plan_tier",           opts: PLAN_TIERS },
         ].map(({ label, field, opts }) => (
           <div key={field}>
-            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
               {label}
             </label>
-            <select
+            <Select
               value={form[field as keyof typeof form]}
               onChange={sel(field)}
-              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             >
               {opts.map(o => (
                 <option key={o} value={o}>{o.replace(/_/g, " ")}</option>
               ))}
-            </select>
+            </Select>
           </div>
         ))}
       </div>
 
-      <button
+      <Button
         onClick={handleScore}
         disabled={loading}
-        className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
       >
         {loading && <Loader2 className="h-4 w-4 animate-spin" />}
         Estimate LTV
-      </button>
+      </Button>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
           {error}
         </div>
       )}
@@ -86,23 +86,23 @@ export function ColdStartForm() {
         <Card className="animate-fade-in">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm text-slate-500">Estimated LTV (36m)</p>
-              <p className="text-3xl font-bold text-slate-900">
+              <p className="text-sm text-muted-foreground">Estimated LTV (36m)</p>
+              <p className="text-3xl font-bold text-foreground">
                 {formatCurrency(Number(result.ltv_36m ?? 0))}
               </p>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 text-xs text-muted-foreground">
                 CI: [{formatCurrency(Number(result.ci_lower_36m ?? 0))},
                      {formatCurrency(Number(result.ci_upper_36m ?? 0))}]
               </p>
             </div>
             <div className="text-right space-y-2">
               <SegmentBadge segment={String(result.segment ?? "low_value")} />
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 Max CAC: <strong>{formatCurrency(Number(result.recommended_max_cac ?? 0))}</strong>
               </p>
             </div>
           </div>
-          <div className="mt-3 border-t border-slate-100 pt-3 text-xs text-slate-400">
+          <div className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground">
             Match quality: <strong>{String(result.match_quality ?? "—")}</strong>
             {" · "}
             Latency: {Number(result.scoring_latency_ms ?? 0)}ms

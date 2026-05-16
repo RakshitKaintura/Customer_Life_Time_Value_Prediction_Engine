@@ -33,7 +33,7 @@ export function LeverRecommendations({ data }: Props) {
     <div className="chart-container">
       <CardHeader>
         <CardTitle>Actionable Lever Recommendations</CardTitle>
-        <span className="text-xs text-slate-400">
+        <span className="text-xs text-muted-foreground">
           {positive.length} significant positive levers identified
         </span>
       </CardHeader>
@@ -41,24 +41,24 @@ export function LeverRecommendations({ data }: Props) {
         {positive.map((effect) => (
           <div
             key={effect.treatment_name}
-            className="flex items-start gap-4 rounded-lg border border-green-100 bg-green-50 p-4"
+            className="flex items-start gap-4 rounded-lg border border-border bg-card p-4"
           >
-            <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+            <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-foreground" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <p className="font-medium text-slate-900 text-sm">
+                <p className="font-medium text-foreground text-sm">
                   {effect.effect_description}
                 </p>
-                <span className="text-sm font-bold text-green-700">
+                <span className="text-sm font-bold text-foreground">
                   +{formatCurrency(effect.ate)} avg LTV
                 </span>
               </div>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-muted-foreground">
                 CI: [{formatCurrency(effect.ate_lower_ci)}, {formatCurrency(effect.ate_upper_ci)}]
               </p>
               {actions[effect.treatment_name] && (
-                <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-600">
-                  <ArrowRight className="h-3 w-3 text-blue-500" />
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <ArrowRight className="h-3 w-3 text-foreground" />
                   {actions[effect.treatment_name]}
                 </div>
               )}
@@ -66,7 +66,7 @@ export function LeverRecommendations({ data }: Props) {
           </div>
         ))}
         {positive.length === 0 && (
-          <p className="text-sm text-slate-400 py-4 text-center">
+          <p className="text-sm text-muted-foreground py-4 text-center">
             No significant positive levers found yet. Run the causal ML notebook first.
           </p>
         )}
