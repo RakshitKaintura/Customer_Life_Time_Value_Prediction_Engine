@@ -10,7 +10,7 @@ Endpoints:
     POST   /batch-score             Score a batch of customers
     GET    /health                  Service health check
     GET    /model-performance       Current model MAE and calibration metrics
-    POST   /webhook/hubspot         HubSpot new contact → score + update CRM
+    POST   /webhook/airtable        Airtable contact → score + upsert
     POST   /webhook/segment         Segment.io identify → score + return LTV
 """
 

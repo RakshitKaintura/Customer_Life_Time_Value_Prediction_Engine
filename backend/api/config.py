@@ -41,10 +41,22 @@ class APISettings(BaseSettings):
     API_RATE_LIMIT_PER_MINUTE: int = 100
 
     # Integrations
-    HUBSPOT_API_KEY:      str = ""
     SEGMENT_WRITE_KEY:    str = ""
     GOOGLE_ADS_DEVELOPER_TOKEN: str = ""
     META_ACCESS_TOKEN:    str = ""
+    AIRTABLE_API_TOKEN:   str = ""
+    AIRTABLE_BASE_ID:     str = ""
+    AIRTABLE_TABLE_ID:    str = ""
+    AIRTABLE_EMAIL_FIELD: str = "email"
+
+    BREVO_API_KEY:        str = ""
+    BREVO_SENDER_EMAIL:   str = ""
+    BREVO_SENDER_NAME:    str = ""
+    BREVO_TEMPLATE_CHAMPIONS: int | None = None
+    BREVO_TEMPLATE_HIGH:      int | None = None
+    BREVO_TEMPLATE_MEDIUM:    int | None = None
+    BREVO_TEMPLATE_LOW:       int | None = None
+    BREVO_DAILY_LIMIT:        int = 300
 
     # Environment
     ENVIRONMENT: str = "development"

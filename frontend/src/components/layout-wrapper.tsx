@@ -1,42 +1,42 @@
-'use client';
+"use client";
 
-import { useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { Sidebar } from '@/components/nav/sidebar';
-import { MobileNav } from '@/components/nav/mobile-nav';
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
+import { Sidebar } from "@/components/nav/sidebar";
+import { MobileNav } from "@/components/nav/mobile-nav";
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isSignedIn, isLoaded } = useUser();
 
   // Pages that don't require authentication
-  const publicPages = ['/welcome', '/auth'];
+  const publicPages = ["/welcome", "/auth", "/sign-in", "/sign-up"];
   const isPublicPage = publicPages.some((page) => pathname.startsWith(page));
 
   useEffect(() => {
     // Wait for auth check to complete
-    if (isLoading) return;
+    if (!isLoaded) return;
 
     // If user is not authenticated and trying to access a protected page
-    if (!isAuthenticated && !isPublicPage && pathname !== '/') {
-      router.push('/welcome');
+    if (!isSignedIn && !isPublicPage && pathname !== "/") {
+      router.push("/welcome");
     }
 
     // If user is not authenticated and on root, redirect to welcome
-    if (!isAuthenticated && pathname === '/') {
-      router.push('/welcome');
+    if (!isSignedIn && pathname === "/") {
+      router.push("/welcome");
     }
 
     // If user is authenticated and on welcome/auth, redirect to dashboard
-    if (isAuthenticated && isPublicPage) {
-      router.push('/');
+    if (isSignedIn && isPublicPage) {
+      router.push("/");
     }
-  }, [isAuthenticated, isLoading, pathname, isPublicPage, router]);
+  }, [isSignedIn, isLoaded, pathname, isPublicPage, router]);
 
   // Show loading state
-  if (isLoading) {
+  if (!isLoaded) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="text-center">
@@ -55,7 +55,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   }
 
   // For authenticated users, show sidebar + dashboard
-  if (isAuthenticated) {
+  if (isSignedIn) {
     return (
       <div className="flex h-screen overflow-hidden">
         <div className="hidden lg:block">

@@ -32,7 +32,11 @@ services:
         sync:  false
       - key:   API_SECRET_KEY
         generateValue: true
-      - key:   HUBSPOT_API_KEY
+      - key:   AIRTABLE_API_TOKEN
+        sync:  false
+      - key:   AIRTABLE_BASE_ID
+        sync:  false
+      - key:   AIRTABLE_TABLE_ID
         sync:  false
       - key:   SEGMENT_WRITE_KEY
         sync:  false
@@ -46,4 +50,13 @@ services:
         value: ./models
       - key:   ONNX_PATH
         value: ./models/transformer.onnx
+
+  - type: worker
+    name: ltv-dagster-daemon
+    runtime: python
+    buildCommand: uv pip install --system -e ".[orchestration]"
+    startCommand: dagster-daemon run
+    envVars:
+      - key: DAGSTER_HOME
+        value: /tmp/dagster_home
 

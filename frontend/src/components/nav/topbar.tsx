@@ -1,13 +1,27 @@
+"use client";
+
 import { Bell, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 interface TopbarProps {
   title: string;
   subtitle?: string;
   actions?: React.ReactNode;
+  onRefresh?: () => void;
 }
 
-export function Topbar({ title, subtitle, actions }: TopbarProps) {
+export function Topbar({ title, subtitle, actions, onRefresh }: TopbarProps) {
+  const router = useRouter();
+
+  const handleRefresh = () => {
+    if (onRefresh) {
+      onRefresh();
+      return;
+    }
+    router.refresh();
+  };
+
   return (
     <header className="flex min-h-16 flex-wrap items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-3 sm:px-6 backdrop-blur">
       <div>
@@ -18,7 +32,11 @@ export function Topbar({ title, subtitle, actions }: TopbarProps) {
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
         {actions}
-        <button className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground shadow-[0_10px_20px_-18px_rgba(0,0,0,0.35)] transition hover:-translate-y-0.5 hover:text-foreground sm:flex">
+        <button
+          type="button"
+          onClick={handleRefresh}
+          className="hidden items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground shadow-[0_10px_20px_-18px_rgba(0,0,0,0.35)] transition hover:-translate-y-0.5 hover:text-foreground sm:flex"
+        >
           <RefreshCw className="h-3.5 w-3.5" />
           Refresh
         </button>

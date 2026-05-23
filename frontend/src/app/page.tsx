@@ -18,6 +18,11 @@ export default async function OverviewPage() {
         subtitle="Predicted revenue distribution and customer value concentration"
       />
       <div className="page-content space-y-6">
+        {(scoreData.length === 0 || segmentData.length === 0) && (
+          <div className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+            Data not ready. Populate final scores and segment views to unlock the overview metrics.
+          </div>
+        )}
         {/* KPI cards */}
         <OverviewStats
           segmentData={segmentData}

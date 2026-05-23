@@ -159,7 +159,7 @@ export default function WelcomePage() {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-4">
                 <Link
-                  href="/auth"
+                  href="/sign-up"
                   className="rounded-lg border border-foreground bg-foreground px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.3em] text-background transition hover:bg-foreground/90"
                 >
                   Get Started
@@ -296,7 +296,7 @@ export default function WelcomePage() {
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <Link
-                href="/auth"
+                href="/sign-up"
                 className="rounded-lg border border-white bg-white px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.3em] text-black transition hover:bg-zinc-200"
               >
                 Start Free

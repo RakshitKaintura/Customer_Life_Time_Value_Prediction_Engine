@@ -14,6 +14,8 @@ If arize-phoenix is not installed, falls back to local logging.
 
 from __future__ import annotations
 
+import os
+import sys
 from datetime import datetime, timezone
 from typing import Any
 
@@ -32,6 +34,24 @@ class ArizePhoenixClient:
 
     def __init__(self) -> None:
         self._available = self._check_arize_available()
+        # By default, do not auto-launch Phoenix inside batch/orchestration jobs.
+        # This avoids temp DB lock issues and console encoding crashes on Windows.
+        self._auto_launch = os.getenv("PHOENIX_AUTO_LAUNCH", "false").lower() == "true"
+
+    @staticmethod
+    def _ensure_utf8_stdio() -> None:
+        """
+        Best-effort guard against Windows codepage encoding errors (e.g. charmap)
+        when third-party libraries print Unicode characters.
+        """
+        try:
+            if hasattr(sys.stdout, "reconfigure"):
+                sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+            if hasattr(sys.stderr, "reconfigure"):
+                sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            # Non-fatal: continue with default stream settings.
+            pass
 
     def _check_arize_available(self) -> bool:
         try:
@@ -65,6 +85,8 @@ class ArizePhoenixClient:
         except ImportError:
             return {"status": "skipped"}
 
+        self._ensure_utf8_stdio()
+
         # Load predictions
         rows = db_client.execute_sql(
             """
@@ -95,10 +117,21 @@ class ArizePhoenixClient:
         df = pd.DataFrame(rows)
 
         try:
-            # Launch Phoenix if not already running
+            # Use existing Phoenix session if available.
             session = px.active_session()
-            if session is None:
+            if session is None and self._auto_launch:
                 session = px.launch_app()
+            if session is None:
+                logger.warning(
+                    "Phoenix session is not active and PHOENIX_AUTO_LAUNCH is disabled; "
+                    "skipping sync for model_version={}.",
+                    model_version,
+                )
+                return {
+                    "status": "skipped",
+                    "reason": "phoenix_session_not_active",
+                    "n_records": 0,
+                }
 
             # Log the dataframe as a dataset
             dataset = px.Dataset(

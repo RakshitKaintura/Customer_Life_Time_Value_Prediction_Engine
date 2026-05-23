@@ -282,7 +282,12 @@ API_SECRET_KEY            # For API authentication
 
 # Optional
 WANDB_API_KEY             # For experiment tracking
-HUBSPOT_API_KEY           # For CRM integration
+AIRTABLE_API_TOKEN        # Airtable CRM token
+AIRTABLE_BASE_ID          # Airtable base ID
+AIRTABLE_TABLE_ID         # Airtable table ID
+BREVO_API_KEY             # Brevo API key
+BREVO_SENDER_EMAIL        # Brevo sender email
+BREVO_SENDER_NAME         # Brevo sender name
 MODEL_CACHE_DIR           # Where to store models
 ```
 

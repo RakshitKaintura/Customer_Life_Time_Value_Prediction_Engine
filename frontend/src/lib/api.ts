@@ -47,6 +47,14 @@ export interface ModelPerformance {
   last_scored_at: string | null;
 }
 
+export interface SegmentStat {
+  segment: string;
+  avg_ltv: number;
+  avg_max_cac: number;
+  pct_customers: number;
+  max_cac_pct: number;
+}
+
 async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
@@ -101,6 +109,9 @@ export const ltvApi = {
 
   getModelPerformance: () =>
     apiFetch<ModelPerformance>("/model-performance"),
+
+  getSegmentStats: () =>
+    apiFetch<{ data: SegmentStat[] }>("/segment-stats"),
 
   health: () => apiFetch<{ status: string }>("/health"),
 };

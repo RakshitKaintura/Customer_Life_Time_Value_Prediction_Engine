@@ -25,7 +25,10 @@ export default async function CausalPage() {
           <CausalEffectsChart data={effects} />
           <ShapImportanceChart data={shapData} />
         </div>
-        <LeverRecommendations data={effects} />
+        <LeverRecommendations
+          data={effects}
+          fallbackText="Recommendation coming soon. Add a lever description in causal_treatment_effects."
+        />
         <ColdStartHeatmap data={coldSlices} />
       </div>
     </div>

@@ -17,7 +17,7 @@
 - **Causal Insights**: Integrated causal ML (DAGs, heterogeneous effects) to understand what drives value
 - **Real-Time Inference**: ONNX-optimized models with sub-millisecond predictions at scale
 - **Fully Tested**: 45+ test suites covering models, APIs, and integrations
-- **Enterprise Integrations**: HubSpot, Google Ads, Meta, Segment, MongoDB, Supabase
+- **Enterprise Integrations**: Airtable, Brevo, Google Ads, Meta, Segment, MongoDB, Supabase
 
 ---
 
@@ -99,7 +99,8 @@
 - **Explainability**: Feature importance & SHAP values
 
 ### 5. **Integration Hubs** (`backend/integrations/`)
-- HubSpot CRM connector
+- Airtable CRM connector
+- Brevo email automation
 - Google Ads & Meta Ads platforms
 - Segment.io CDP
 - Custom API connectors
@@ -207,7 +208,7 @@
 
 **Integrations:**
 - `supabase` — Postgres client
-- `hubspot-api-client` — CRM connector
+- Airtable API — CRM connector
 - `segment-analytics-python` — CDP integration
 
 ---
@@ -254,7 +255,16 @@ API_SECRET_KEY=your-secret-key-here
 
 # Optional Integrations
 WANDB_API_KEY=your_wandb_key
-HUBSPOT_API_KEY=pat-xxxxx
+AIRTABLE_API_TOKEN=pat-xxxxx
+AIRTABLE_BASE_ID=appxxxxxxxxxxxx
+AIRTABLE_TABLE_ID=tblxxxxxxxxxxxx
+BREVO_API_KEY=xsmtpsib-xxxxx
+BREVO_SENDER_EMAIL=you@domain.com
+BREVO_SENDER_NAME=Your Name
+BREVO_TEMPLATE_CHAMPIONS=123
+BREVO_TEMPLATE_HIGH=124
+BREVO_TEMPLATE_MEDIUM=125
+BREVO_TEMPLATE_LOW=126
 SEGMENT_API_KEY=xxxxx
 GOOGLE_ADS_CUSTOMER_ID=1234567890
 

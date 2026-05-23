@@ -70,7 +70,7 @@ async def get_welcome_metadata() -> dict:
             "deep_learning": "Transformer sequence models",
             "causal_analysis": "DAGs & heterogeneous effects",
             "ensemble": "XGBoost fusion layer",
-            "integrations": ["HubSpot", "Google Ads", "Meta", "Segment"],
+            "integrations": ["Airtable", "Google Ads", "Meta", "Segment"],
             "database": "Supabase/PostgreSQL"
         },
         "stats": {

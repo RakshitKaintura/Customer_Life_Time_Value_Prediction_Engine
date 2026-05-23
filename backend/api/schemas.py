@@ -196,21 +196,21 @@ class ModelPerformanceResponse(BaseModel):
     last_scored_at:           datetime | None = None
 
 
+class SegmentStat(BaseModel):
+    segment:        str
+    avg_ltv:        float
+    avg_max_cac:    float
+    pct_customers:  float
+    max_cac_pct:    float
+
+
+class SegmentStatsResponse(BaseModel):
+    data: list[SegmentStat] = Field(default_factory=list)
+
+
 # ─────────────────────────────────────────────────────────────
 # Webhook schemas
 # ─────────────────────────────────────────────────────────────
-
-class HubSpotWebhookPayload(BaseModel):
-    """HubSpot new contact webhook payload."""
-    contact_id:     str
-    email:          str | None = None
-    company:        str | None = None
-    vertical:       str | None = None
-    company_size:   str | None = None
-    plan_tier:      str | None = None
-    channel:        str | None = None
-    properties:     dict[str, Any] = Field(default_factory=lambda: {})
-
 
 class SegmentWebhookPayload(BaseModel):
     """Segment.io identify event payload."""
@@ -218,6 +218,15 @@ class SegmentWebhookPayload(BaseModel):
     anonymous_id: str | None = None
     traits:     dict[str, Any] = Field(default_factory=lambda: {})
     context:    dict[str, Any] = Field(default_factory=lambda: {})
+
+
+class AirtableWebhookPayload(BaseModel):
+    """Airtable webhook payload (manual/simple JSON)."""
+    contact_id:   str
+    vertical:     str | None = None
+    company_size: str | None = None
+    channel:      str | None = None
+    plan_tier:    str | None = None
 
 
 class WebhookResponse(BaseModel):

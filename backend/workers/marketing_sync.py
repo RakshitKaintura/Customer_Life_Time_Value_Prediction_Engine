@@ -2,9 +2,8 @@
 Marketing Sync Worker.
 
 Scheduled background worker that runs on Render:
-  - Uploads customer LTV segments to Google Ads Customer Match
-  - Uploads high-LTV seed audience to Meta Ads
-  - Syncs LTV scores to HubSpot contact properties
+  - Syncs LTV scores to Airtable contact records
+  - Sends segment-based emails via Brevo
   - Schedules: every 24 hours
 
 Run:
@@ -14,121 +13,111 @@ Run:
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from datetime import datetime, timezone
 
 from loguru import logger
 
+from backend.api.config import api_settings
 from backend.db.supabase_client import SupabaseClient
-from backend.integrations.google_ads import GoogleAdsClient
-from backend.integrations.hubspot import HubSpotClient
-from backend.integrations.meta_ads import MetaAdsClient
+from backend.integrations.airtable import AirtableClient
+from backend.integrations.brevo import BrevoClient
 
 
-async def sync_google_ads(db: SupabaseClient) -> dict:
-    """Upload LTV segments to Google Ads Customer Match."""
-    client = GoogleAdsClient()
-    results = {}
+async def sync_airtable(db: SupabaseClient) -> dict:
+    """Sync LTV scores to Airtable contact records."""
+    client = AirtableClient()
 
-    segments = ["champions", "high_value", "medium_value", "low_value"]
-
-    for segment in segments:
-        customers = db.execute_sql(
-            """
-            SELECT c.customer_id, f.ltv_36m
-            FROM final_ltv_scores f
-            JOIN customers c USING (customer_id)
-            WHERE f.segment = :seg
-            ORDER BY f.ltv_36m DESC
-            LIMIT 50000
-            """,
-            {"seg": segment},
-        )
-
-        if not customers:
-            continue
-
-        # In production, would fetch emails from CRM
-        emails = [f"customer_{c['customer_id']}@example.com" for c in customers]
-
-        result = client.upload_customer_match_list(
-            customer_emails = emails,
-            list_name       = f"LTV_{segment.upper()}",
-            segment         = segment,
-        )
-        results[segment] = result
-        logger.info("Google Ads sync: {} → {} customers", segment, len(customers))
-
-    return results
-
-
-async def sync_meta_ads(db: SupabaseClient) -> dict:
-    """Upload high-LTV seed audience to Meta Ads."""
-    client = MetaAdsClient()
-
-    # High-LTV seed: champions + high_value
-    customers = db.execute_sql(
-        """
-        SELECT c.customer_id, f.ltv_36m
-        FROM final_ltv_scores f
-        JOIN customers c USING (customer_id)
-        WHERE f.segment IN ('champions', 'high_value')
-        ORDER BY f.ltv_36m DESC
-        LIMIT 10000
-        """,
-    )
-
-    if not customers:
-        return {"status": "skipped", "reason": "no_high_value_customers"}
-
-    emails = [f"customer_{c['customer_id']}@example.com" for c in customers]
-
-    result = await client.upload_custom_audience(
-        customer_emails = emails,
-        audience_name   = "LTV_High_Value_Seed",
-        description     = "Champions + High Value LTV segments for lookalike targeting",
-    )
-    logger.info("Meta Ads sync: {} high-value customers uploaded", len(emails))
-    return result
-
-
-async def sync_hubspot(db: SupabaseClient) -> dict:
-    """Sync LTV scores to HubSpot contact properties."""
-    client  = HubSpotClient()
-    updated = 0
-    errors  = 0
+    days_raw = os.getenv("AIRTABLE_SYNC_DAYS", "0").strip()
+    days = int(days_raw) if days_raw.isdigit() else 0
+    where_clause = ""
+    params = {}
+    if days > 0:
+        where_clause = "WHERE f.scored_at > NOW() - (:days || ' days')::interval"
+        params = {"days": days}
 
     customers = db.execute_sql(
-        """
+        f"""
         SELECT f.customer_id, f.ltv_36m, f.segment,
                f.recommended_max_cac, f.ltv_source
         FROM final_ltv_scores f
-        WHERE f.scored_at > NOW() - INTERVAL '25 hours'
+        {where_clause}
         LIMIT 1000
-        """
+        """,
+        params,
     )
 
-    for cust in customers:
-        try:
-            await client.update_contact_ltv(
-                contact_id = cust["customer_id"],
-                ltv_36m    = float(cust["ltv_36m"] or 0),
-                segment    = cust["segment"] or "low_value",
-                max_cac    = float(cust["recommended_max_cac"] or 0),
-                ltv_source = cust["ltv_source"] or "full_model",
-            )
-            updated += 1
+    if not customers:
+        total = db.execute_sql("SELECT COUNT(*) AS n FROM final_ltv_scores")
+        logger.warning("Airtable sync found 0 records; total in final_ltv_scores: {}", total)
 
-            # Trigger workflow for high-value customers
-            if cust["segment"] in ("champions", "high_value"):
-                await client.trigger_high_value_workflow(cust["customer_id"])
+    records = [
+        {
+            "contact_id": str(cust["customer_id"]),
+            "ltv_score_36m": float(cust["ltv_36m"] or 0),
+            "ltv_segment": cust["segment"] or "low_value",
+            "recommended_max_cac": float(cust["recommended_max_cac"] or 0),
+            "ltv_source": cust["ltv_source"] or "full_model",
+        }
+        for cust in customers
+    ]
 
-        except Exception as exc:
-            logger.warning("HubSpot sync failed for {}: {}", cust["customer_id"], exc)
-            errors += 1
+    result = await client.upsert_contacts(records)
+    logger.info("Airtable sync: {}", result)
+    return result
 
-    logger.info("HubSpot sync: {} updated, {} errors", updated, errors)
-    return {"updated": updated, "errors": errors}
+
+async def sync_brevo() -> dict:
+    """Send segment-based emails using Brevo from Airtable contacts."""
+    airtable = AirtableClient()
+    brevo = BrevoClient()
+    email_field = api_settings.AIRTABLE_EMAIL_FIELD
+
+    fields = [
+        "contact_id",
+        email_field,
+        "ltv_segment",
+        "ltv_score_36m",
+        "recommended_max_cac",
+        "ltv_source",
+    ]
+
+    records = await airtable.list_contacts(fields=fields, max_records=api_settings.BREVO_DAILY_LIMIT)
+    if not records:
+        return {"status": "skipped", "reason": "no_contacts"}
+
+    sent = 0
+    skipped = 0
+    for record in records:
+        fields_map = record.get("fields", {})
+        email = fields_map.get(email_field)
+        segment = fields_map.get("ltv_segment")
+        if not email or not segment:
+            skipped += 1
+            continue
+
+        params = {
+            "contact_id": fields_map.get("contact_id"),
+            "ltv_score_36m": fields_map.get("ltv_score_36m"),
+            "recommended_max_cac": fields_map.get("recommended_max_cac"),
+            "ltv_source": fields_map.get("ltv_source"),
+            "segment": segment,
+        }
+
+        result = await brevo.send_segment_email(
+            to_email=str(email),
+            to_name=None,
+            segment=str(segment),
+            params=params,
+        )
+
+        if result.get("status") == "sent":
+            sent += 1
+        else:
+            skipped += 1
+
+    return {"status": "complete", "sent": sent, "skipped": skipped}
 
 
 async def run_sync_cycle() -> None:
@@ -139,13 +128,12 @@ async def run_sync_cycle() -> None:
 
     # Run all syncs in parallel (they are independent)
     results = await asyncio.gather(
-        sync_google_ads(db),
-        sync_meta_ads(db),
-        sync_hubspot(db),
+        sync_airtable(db),
+        sync_brevo(),
         return_exceptions=True,
     )
 
-    names = ["google_ads", "meta_ads", "hubspot"]
+    names = ["airtable", "brevo"]
     for name, result in zip(names, results):
         if isinstance(result, Exception):
             logger.error("{} sync failed: {}", name, result)
@@ -167,6 +155,11 @@ async def run_sync_cycle() -> None:
 
 async def main() -> None:
     """Run sync every 24 hours."""
+    run_once = os.getenv("MARKETING_SYNC_ONCE", "").strip().lower() in {"1", "true", "yes"}
+    if run_once:
+        await run_sync_cycle()
+        return
+
     while True:
         try:
             await run_sync_cycle()

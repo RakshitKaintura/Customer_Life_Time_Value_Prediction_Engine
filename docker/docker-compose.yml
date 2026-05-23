@@ -22,8 +22,10 @@ services:
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - DATABASE_URL=${DATABASE_URL}
       - API_SECRET_KEY=${API_SECRET_KEY}
-      - HUBSPOT_API_KEY=${HUBSPOT_API_KEY}
       - SEGMENT_WRITE_KEY=${SEGMENT_WRITE_KEY}
+      - AIRTABLE_API_TOKEN=${AIRTABLE_API_TOKEN}
+      - AIRTABLE_BASE_ID=${AIRTABLE_BASE_ID}
+      - AIRTABLE_TABLE_ID=${AIRTABLE_TABLE_ID}
     volumes:
       - ../models:/app/models:ro
       - ../data:/app/data:ro
@@ -49,7 +51,9 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - GOOGLE_ADS_DEVELOPER_TOKEN=${GOOGLE_ADS_DEVELOPER_TOKEN}
       - META_ACCESS_TOKEN=${META_ACCESS_TOKEN}
-      - HUBSPOT_API_KEY=${HUBSPOT_API_KEY}
+      - AIRTABLE_API_TOKEN=${AIRTABLE_API_TOKEN}
+      - AIRTABLE_BASE_ID=${AIRTABLE_BASE_ID}
+      - AIRTABLE_TABLE_ID=${AIRTABLE_TABLE_ID}
     volumes:
       - ../models:/app/models:ro
     restart: unless-stopped

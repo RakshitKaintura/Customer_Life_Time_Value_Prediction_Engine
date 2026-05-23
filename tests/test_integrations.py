@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from backend.integrations.airtable import AirtableClient
+from backend.integrations.brevo import BrevoClient
 from backend.integrations.google_ads import GoogleAdsClient, SEGMENT_TARGET_ROAS
-from backend.integrations.hubspot import HubSpotClient
 from backend.integrations.segment_io import SegmentClient
 
 
@@ -39,9 +40,9 @@ def test_google_ads_roas_setting() -> None:
 
 
 @pytest.mark.asyncio
-async def test_hubspot_no_key_skips() -> None:
-    client = HubSpotClient(api_key="")
-    result = await client.update_contact_ltv("C001", 5000.0, "high_value", 2000.0)
+async def test_airtable_no_key_skips() -> None:
+    client = AirtableClient(api_token="", base_id="", table_id="")
+    result = await client.upsert_contacts([{"contact_id": "C001"}])
     assert result["status"] == "skipped"
 
 
@@ -56,4 +57,11 @@ async def test_segment_no_key_skips() -> None:
 async def test_segment_track_no_key_skips() -> None:
     client = SegmentClient(write_key="")
     result = await client.track_ltv_scored("user_123", 3000.0, "medium_value")
+    assert result["status"] == "skipped"
+
+
+@pytest.mark.asyncio
+async def test_brevo_no_key_skips() -> None:
+    client = BrevoClient(api_key="")
+    result = await client.send_segment_email("a@b.com", None, "champions")
     assert result["status"] == "skipped"

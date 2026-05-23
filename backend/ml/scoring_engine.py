@@ -17,6 +17,7 @@ Used by FastAPI /score endpoint in Phase 6.
 from __future__ import annotations
 
 import time
+from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -100,7 +101,7 @@ class LTVScoringEngine:
             max_cac = compute_max_cac(ltv_36m)
             elapsed_ms = int((time.perf_counter() - t0) * 1000)
 
-            return {
+            result = {
                 "customer_id":          customer_id,
                 "ltv_source":           "bgnbd_only",
                 "ltv_12m":              round(ltv_12m, 2),
@@ -116,6 +117,8 @@ class LTVScoringEngine:
                 "lookalike_customer_ids": [],
                 "scoring_latency_ms":   elapsed_ms,
             }
+            self._persist_score(result)
+            return result
 
         # 3. Transformer ONNX scoring
         seq_tokens = self._get_sequence_tokens(customer_id)
@@ -190,6 +193,8 @@ class LTVScoringEngine:
                 "meta_features": meta,
             }
 
+        self._persist_score(response)
+
         logger.debug(
             "Scored {} → £{:.0f} LTV_36m ({}) in {}ms",
             customer_id, ltv_36m, segment, elapsed_ms,
@@ -214,6 +219,8 @@ class LTVScoringEngine:
         if customer_id:
             result["customer_id"] = customer_id
         result["scoring_latency_ms"] = elapsed_ms
+        if customer_id:
+            self._persist_score(result)
 
         return result
 
@@ -436,3 +443,58 @@ class LTVScoringEngine:
             self._get_rfm(cid)
             self._get_sequence_tokens(cid)
         logger.info("Cache warmed")
+
+    def _persist_score(self, result: dict[str, Any]) -> None:
+        """
+        Persist score output to final_ltv_scores + scoring_audit.
+        Best-effort only; failures should not break API scoring.
+        """
+        customer_id = result.get("customer_id")
+        if not customer_id:
+            return
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        record = {
+            "customer_id": customer_id,
+            "model_version": self.model_version,
+            "scored_at": now_iso,
+            "ltv_source": result.get("ltv_source", "full_model"),
+            "ltv_12m": result.get("ltv_12m"),
+            "ltv_24m": result.get("ltv_24m"),
+            "ltv_36m": result.get("ltv_36m"),
+            "ltv_percentile": result.get("ltv_percentile"),
+            "segment": result.get("segment"),
+            "probability_alive_12m": result.get("probability_alive_12m"),
+            "recommended_max_cac": result.get("recommended_max_cac"),
+            "scoring_latency_ms": result.get("scoring_latency_ms"),
+            "inference_backend": "onnx" if self.onnx is not None else "bgnbd_only",
+        }
+
+        ci = result.get("confidence_interval_36m")
+        if isinstance(ci, (tuple, list)) and len(ci) == 2:
+            record["ci_lower_36m"] = ci[0]
+            record["ci_upper_36m"] = ci[1]
+
+        try:
+            self.db.bulk_upsert(
+                "final_ltv_scores",
+                [record],
+                conflict_columns=["customer_id", "model_version"],
+                batch_size=1,
+            )
+            self.db.bulk_upsert(
+                "scoring_audit",
+                [{
+                    "customer_id": customer_id,
+                    "model_version": self.model_version,
+                    "ltv_source": result.get("ltv_source", "full_model"),
+                    "scoring_latency_ms": result.get("scoring_latency_ms"),
+                    "scored_at": now_iso,
+                    "api_endpoint": "/score",
+                    "error_message": None,
+                }],
+                conflict_columns=None,
+                batch_size=1,
+            )
+        except Exception as exc:
+            logger.warning("Failed to persist scoring output for {}: {}", customer_id, exc)

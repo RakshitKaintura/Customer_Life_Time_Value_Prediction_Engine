@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth-context";
+import { useClerk } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   Users,
@@ -12,8 +12,10 @@ import {
   Calculator,
   Activity,
   TrendingUp,
-  Zap,
+  BarChart3,
+  ArrowUpRight,
   Sparkles,
+  TableProperties,
   LogOut,
 } from "lucide-react";
 
@@ -29,6 +31,12 @@ const navItems = [
     label: "LTV Overview",
     icon:  LayoutDashboard,
     description: "Score distribution & revenue concentration",
+  },
+  {
+    href:  "/dataset",
+    label: "Dataset",
+    icon:  TableProperties,
+    description: "Short source data snapshot",
   },
   {
     href:  "/cohorts",
@@ -65,7 +73,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { signOut } = useAuth();
+  const { signOut } = useClerk();
 
   const handleSignOut = async () => {
     await signOut();
@@ -76,8 +84,9 @@ export function Sidebar() {
     <aside className="flex h-screen w-72 flex-col border-r border-border bg-background/80 backdrop-blur">
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-border px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-foreground">
-          <Zap className="h-4 w-4 text-background" />
+        <div className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-foreground">
+          <BarChart3 className="h-4 w-4 text-background" />
+          <ArrowUpRight className="absolute -right-0.5 -top-0.5 h-3 w-3 text-background" />
         </div>
         <div>
           <p className="text-sm font-semibold tracking-tight text-foreground">LTV Engine</p>

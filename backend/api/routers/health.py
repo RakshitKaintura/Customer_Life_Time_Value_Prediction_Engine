@@ -9,7 +9,7 @@ from loguru import logger
 
 from backend.api.config import api_settings
 from backend.api.dependencies import DBClient, get_scoring_engine
-from backend.api.schemas import HealthResponse, ModelPerformanceResponse
+from backend.api.schemas import HealthResponse, ModelPerformanceResponse, SegmentStatsResponse
 
 router = APIRouter(tags=["Health & Monitoring"])
 
@@ -113,3 +113,37 @@ async def model_performance(db: DBClient) -> ModelPerformanceResponse:
         n_customers_scored        = int(cov.get("n", 0)),
         last_scored_at            = cov.get("last"),
     )
+
+
+@router.get(
+    "/segment-stats",
+    response_model=SegmentStatsResponse,
+    summary="Live segment LTV and CAC statistics",
+)
+async def segment_stats(db: DBClient) -> SegmentStatsResponse:
+    rows = db.execute_sql(
+        """
+        SELECT segment, pct_customers, avg_ltv_36m, avg_max_cac
+        FROM v_segment_revenue_concentration
+        ORDER BY avg_ltv_36m DESC
+        """
+    )
+
+    normalized = []
+    for row in rows:
+        avg_ltv = float(row.get("avg_ltv_36m") or 0)
+        avg_max_cac = float(row.get("avg_max_cac") or 0)
+        pct_customers = float(row.get("pct_customers") or 0) / 100
+        max_cac_pct = avg_max_cac / avg_ltv if avg_ltv > 0 else 0
+
+        normalized.append(
+            {
+                "segment": str(row.get("segment") or "unknown"),
+                "avg_ltv": avg_ltv,
+                "avg_max_cac": avg_max_cac,
+                "pct_customers": pct_customers,
+                "max_cac_pct": max_cac_pct,
+            }
+        )
+
+    return SegmentStatsResponse(data=normalized)

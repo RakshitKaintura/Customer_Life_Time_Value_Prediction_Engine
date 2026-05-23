@@ -48,10 +48,35 @@ export function SegmentPieChart({ data }: Props) {
             ))}
           </Pie>
           <Tooltip
-            formatter={(v: number, _: string, p: { payload?: { avg_ltv: number; pct_revenue: number } }) => [
-              `${v.toLocaleString()} customers`,
-              `Avg LTV: ${formatCurrency(p.payload?.avg_ltv ?? 0)}`,
-            ]}
+            wrapperStyle={{ zIndex: 20 }}
+            content={({ active, payload }) => {
+              if (!active || !payload || payload.length === 0) return null;
+              const entry = payload[0]?.payload as {
+                name?: string;
+                n_customers?: number;
+                avg_ltv?: number;
+                pct_revenue?: number;
+              };
+              return (
+                <div
+                  className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-[0_10px_20px_-18px_rgba(0,0,0,0.45)]"
+                  style={{ color: "hsl(var(--foreground))" }}
+                >
+                  <div className="font-semibold text-foreground">
+                    {entry?.name ?? "Segment"}
+                  </div>
+                  <div className="mt-1 text-muted-foreground">
+                    {Number(entry?.n_customers ?? 0).toLocaleString()} customers
+                  </div>
+                  <div className="text-muted-foreground">
+                    Avg LTV: {formatCurrency(Number(entry?.avg_ltv ?? 0))}
+                  </div>
+                  <div className="text-muted-foreground">
+                    Revenue share: {Number(entry?.pct_revenue ?? 0).toFixed(1)}%
+                  </div>
+                </div>
+              );
+            }}
             contentStyle={{
               fontSize: 12,
               borderRadius: 8,

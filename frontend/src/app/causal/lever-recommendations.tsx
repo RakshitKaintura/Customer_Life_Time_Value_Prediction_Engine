@@ -13,21 +13,19 @@ interface CausalEffect {
 
 interface Props {
   data: CausalEffect[];
+  fallbackText?: string;
 }
 
-export function LeverRecommendations({ data }: Props) {
+export function LeverRecommendations({ data, fallbackText = "Recommendation not yet available for this lever." }: Props) {
   const positive = data
     .filter(d => d.ate > 0 && d.is_significant)
     .sort((a, b) => b.ate - a.ate);
 
-  const actions: Record<string, string> = {
-    onboarding_completed:      "Send personalised onboarding email sequence within 24h of signup",
-    high_value_first_purchase: "Offer premium product bundles at checkout to new customers",
-    multi_category_buyer:      "Cross-sell into adjacent categories after first purchase",
-    fast_repeat_buyer:         "Trigger win-back campaigns within 14 days of first purchase",
-    high_frequency:            "Enrol into VIP programme after 3rd purchase",
-    international_buyer:       "Expand localised marketing to international markets",
-  };
+  const formatTreatmentName = (value: string) =>
+    value
+      .replace(/_/g, " ")
+      .replace(/ltv/gi, "LTV")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
 
   return (
     <div className="chart-container">
@@ -38,16 +36,20 @@ export function LeverRecommendations({ data }: Props) {
         </span>
       </CardHeader>
       <div className="space-y-3">
-        {positive.map((effect) => (
+        {positive.map((effect, index) => (
+          (() => {
+            const label = formatTreatmentName(effect.treatment_name);
+            const actionText = effect.effect_description?.trim();
+            return (
           <div
-            key={effect.treatment_name}
+            key={`${effect.treatment_name}-${index}`}
             className="flex items-start gap-4 rounded-lg border border-border bg-card p-4"
           >
             <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-foreground" />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <p className="font-medium text-foreground text-sm">
-                  {effect.effect_description}
+                  {label}
                 </p>
                 <span className="text-sm font-bold text-foreground">
                   +{formatCurrency(effect.ate)} avg LTV
@@ -56,14 +58,16 @@ export function LeverRecommendations({ data }: Props) {
               <p className="mt-1 text-xs text-muted-foreground">
                 CI: [{formatCurrency(effect.ate_lower_ci)}, {formatCurrency(effect.ate_upper_ci)}]
               </p>
-              {actions[effect.treatment_name] && (
+              {(actionText || !effect.effect_description) && (
                 <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                   <ArrowRight className="h-3 w-3 text-foreground" />
-                  {actions[effect.treatment_name]}
+                  {actionText || fallbackText}
                 </div>
               )}
             </div>
           </div>
+            );
+          })()
         ))}
         {positive.length === 0 && (
           <p className="text-sm text-muted-foreground py-4 text-center">

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { ComponentType, ReactNode, SVGProps } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const fadeUp = {
@@ -180,8 +180,9 @@ export function LandingNav({ className }: LandingNavProps) {
     <nav className={cn("sticky top-0 z-50 border-b border-border bg-background/70 backdrop-blur", className)}>
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <Link href="/welcome" className="flex items-center gap-3 text-sm font-semibold text-foreground">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-foreground text-background">
-            L
+          <span className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-border bg-foreground text-background">
+            <BarChart3 className="h-4 w-4 text-background" />
+            <ArrowUpRight className="absolute -right-0.5 -top-0.5 h-3 w-3 text-background" />
           </span>
           LTV Engine
         </Link>
@@ -196,9 +197,9 @@ export function LandingNav({ className }: LandingNavProps) {
             GitHub
             <ArrowUpRight className="h-4 w-4" />
           </a>
-          <Link href="/auth" className="transition-colors hover:text-foreground">Sign In</Link>
+          <Link href="/sign-in" className="transition-colors hover:text-foreground">Sign In</Link>
           <Link
-            href="/auth"
+            href="/sign-up"
             className="rounded-lg border border-border bg-foreground text-background px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition hover:bg-foreground/90"
           >
             Get Started
@@ -206,7 +207,7 @@ export function LandingNav({ className }: LandingNavProps) {
         </div>
         <div className="md:hidden">
           <Link
-            href="/auth"
+            href="/sign-up"
             className="rounded-lg border border-border bg-foreground text-background px-3 py-2 text-xs font-semibold uppercase tracking-[0.2em]"
           >
             Get Started

@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import warnings
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, TYPE_CHECKING, overload
 
 import numpy as np
 import pandas as pd
@@ -44,6 +44,12 @@ DB_NUMERIC_12_4_ABS_MAX = 99_999_999.0  # NUMERIC(12,4) absolute upper bound is 
 DB_NUMERIC_8_6_ABS_MAX = 99.0  # NUMERIC(8,6) absolute upper bound is < 1e2
 EXP_INPUT_CLIP = 20.0  # exp(20) ~= 4.85e8, keeps transformed effects in sane range
 
+
+@overload
+def _safe_expm1(values: np.ndarray) -> np.ndarray: ...
+
+@overload
+def _safe_expm1(values: float) -> float: ...
 
 def _safe_expm1(values: np.ndarray | float) -> np.ndarray | float:
     """Numerically stable expm1 with clipping to avoid overflow."""
@@ -83,9 +89,20 @@ def _sanitize_effect_record(row: dict[str, Any]) -> dict[str, Any]:
         out["ate_pvalue"] = float(np.clip(out["ate_pvalue"], 0.0, 1.0))
     return out
 
+if TYPE_CHECKING:
+    from econml.dml import LinearDML, CausalForestDML  # pyright: ignore[reportMissingImports]
+    from econml.inference import BootstrapInference  # pyright: ignore[reportMissingImports]
+else:
+    LinearDML = Any
+    CausalForestDML = Any
+    BootstrapInference = Any
+
 try:
-    from econml.dml import LinearDML, CausalForestDML
-    from econml.inference import BootstrapInference
+    from econml.dml import LinearDML as _LinearDML, CausalForestDML as _CausalForestDML  # pyright: ignore[reportMissingImports]
+    from econml.inference import BootstrapInference as _BootstrapInference  # pyright: ignore[reportMissingImports]
+    LinearDML = _LinearDML
+    CausalForestDML = _CausalForestDML
+    BootstrapInference = _BootstrapInference
     ECONML_AVAILABLE = True
 except ImportError:
     ECONML_AVAILABLE = False
@@ -255,7 +272,7 @@ class DoubleMLEstimator:
                 random_state=random_state,
             )
 
-        self.estimator: LinearDML | None = None
+        self.estimator: Any | None = None
         self._is_fitted = False
         self._ate: float = 0.0
         self._ate_stderr: float = 0.0
@@ -279,12 +296,13 @@ class DoubleMLEstimator:
         self._scaler = StandardScaler()
         X_scaled = self._scaler.fit_transform(X)
 
+        t_mean = float(pd.Series(T).astype(float).mean())
         logger.info(
             "Fitting LinearDML for treatment='{}' (n={}, treatment_mean={:.3f})",
-            self.treatment_name, len(Y), T.mean(),
+            self.treatment_name, len(Y), t_mean,
         )
 
-        self.estimator = LinearDML(
+        estimator = LinearDML(
             model_y=self.model_y,
             model_t=self.model_t,
             cv=self.cv_folds,
@@ -293,15 +311,22 @@ class DoubleMLEstimator:
             discrete_treatment=(self.treatment_type == "binary"),
         )
 
-        self.estimator.fit(Y, T, X=X_scaled)
+        estimator.fit(Y, T, X=X_scaled)
+        self.estimator = estimator
         self._is_fitted = True
 
         # Extract ATE
         try:
+            if self.estimator is None:
+                raise RuntimeError("Estimator not initialized")
             ate_result = self.estimator.ate(X_scaled)
             self._ate    = float(_safe_expm1(ate_result))  # reverse log1p safely
             ate_inf      = self.estimator.ate_inference(X_scaled)
-            self._ate_stderr = float(ate_inf.stderr_mean)
+            stderr_mean = getattr(ate_inf, "stderr_mean", None)
+            if stderr_mean is None:
+                stderr = getattr(ate_inf, "stderr", None)
+                stderr_mean = float(np.mean(stderr)) if stderr is not None else 0.0
+            self._ate_stderr = float(stderr_mean)
         except Exception as e:
             logger.warning("ATE extraction failed for {}: {}", self.treatment_name, e)
             self._ate = 0.0
@@ -326,9 +351,11 @@ class DoubleMLEstimator:
         if not self._is_fitted:
             raise RuntimeError("Call .fit() first")
 
+        if self.estimator is None:
+            raise RuntimeError("Estimator not initialized")
         X = self._scaler.transform(df[controls].values)
-        cate_log = self.estimator.effect(X)
-        cate_ltv = _safe_expm1(cate_log.flatten())  # reverse log1p safely
+        cate_log = np.asarray(self.estimator.effect(X)).flatten()
+        cate_ltv = _safe_expm1(cate_log)  # reverse log1p safely
         return cate_ltv
 
     def estimate_cate_with_ci(
@@ -345,12 +372,14 @@ class DoubleMLEstimator:
         if not self._is_fitted:
             raise RuntimeError("Call .fit() first")
 
+        if self.estimator is None:
+            raise RuntimeError("Estimator not initialized")
         X = self._scaler.transform(df[controls].values)
         try:
             inf = self.estimator.effect_inference(X)
-            cate_log = inf.point_estimate.flatten()
-            lower_log = inf.conf_int(alpha=alpha)[0].flatten()
-            upper_log = inf.conf_int(alpha=alpha)[1].flatten()
+            cate_log = np.asarray(inf.point_estimate).flatten()
+            lower_log = np.asarray(inf.conf_int(alpha=alpha)[0]).flatten()
+            upper_log = np.asarray(inf.conf_int(alpha=alpha)[1]).flatten()
             return (
                 _safe_expm1(cate_log),
                 _safe_expm1(lower_log),
@@ -406,7 +435,7 @@ class CausalForestEstimator:
         self.n_estimators    = n_estimators
         self.min_samples_leaf = min_samples_leaf
         self.random_state    = random_state
-        self.estimator: CausalForestDML | None = None
+        self.estimator: Any | None = None
         self._is_fitted = False
 
     def fit(
@@ -428,14 +457,15 @@ class CausalForestEstimator:
             self.treatment_name, self.n_estimators,
         )
 
-        self.estimator = CausalForestDML(
+        estimator = CausalForestDML(
             n_estimators=self.n_estimators,
             min_samples_leaf=self.min_samples_leaf,
             random_state=self.random_state,
             discrete_treatment=(True),  # all our treatments are binary
             cv=3,
         )
-        self.estimator.fit(Y, T, X=X_scaled)
+        estimator.fit(Y, T, X=X_scaled)
+        self.estimator = estimator
         self._is_fitted = True
 
         logger.info("CausalForestDML fitted for '{}'", self.treatment_name)
@@ -446,19 +476,24 @@ class CausalForestEstimator:
     ) -> np.ndarray:
         if not self._is_fitted:
             raise RuntimeError("Call .fit() first")
+        if self.estimator is None:
+            raise RuntimeError("Estimator not initialized")
         X = self._scaler.transform(df[controls].values)
-        return _safe_expm1(self.estimator.effect(X).flatten())
+        cate_log = np.asarray(self.estimator.effect(X)).flatten()
+        return _safe_expm1(cate_log)
 
     def estimate_cate_with_ci(
         self, df: pd.DataFrame, controls: list[str], alpha: float = 0.05
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if not self._is_fitted:
             raise RuntimeError("Call .fit() first")
+        if self.estimator is None:
+            raise RuntimeError("Estimator not initialized")
         X = self._scaler.transform(df[controls].values)
         inf = self.estimator.effect_inference(X)
-        cate  = _safe_expm1(inf.point_estimate.flatten())
-        lower = _safe_expm1(inf.conf_int(alpha=alpha)[0].flatten())
-        upper = _safe_expm1(inf.conf_int(alpha=alpha)[1].flatten())
+        cate  = _safe_expm1(np.asarray(inf.point_estimate).flatten())
+        lower = _safe_expm1(np.asarray(inf.conf_int(alpha=alpha)[0]).flatten())
+        upper = _safe_expm1(np.asarray(inf.conf_int(alpha=alpha)[1]).flatten())
         return cate, lower, upper
 
 
@@ -601,6 +636,8 @@ class CausalLTVPipeline:
         Return a tall Polars DataFrame with per-customer CATE for each treatment.
         Columns: customer_id, treatment_name, cate_estimate, cate_lower, cate_upper
         """
+        if self._df is None:
+            raise RuntimeError("Call .fit() before requesting CATE results")
         customer_ids = self._df["customer_id"].tolist()
         rows = []
         for name in self.estimators:
@@ -620,6 +657,8 @@ class CausalLTVPipeline:
         For each customer, return the single treatment with the highest positive CATE.
         Used to populate causal_lever_recommendations table.
         """
+        if self._df is None:
+            raise RuntimeError("Call .fit() before requesting lever recommendations")
         customer_ids = self._df["customer_id"].tolist()
         n = len(customer_ids)
 
@@ -663,6 +702,9 @@ class CausalLTVPipeline:
     ) -> None:
         """Persist all causal results to Supabase."""
         import json
+
+        if self._df is None:
+            raise RuntimeError("Call .fit() before saving results")
 
         # 1. Model registry
         effects_df = self.get_treatment_effects_summary()
