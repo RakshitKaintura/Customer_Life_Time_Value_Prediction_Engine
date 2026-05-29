@@ -1,6 +1,6 @@
 import { formatCurrency } from "@/lib/utils";
 import { CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, XCircle, ArrowRight } from "lucide-react";
+import { CheckCircle, ArrowRight } from "lucide-react";
 
 interface CausalEffect {
   treatment_name:     string;

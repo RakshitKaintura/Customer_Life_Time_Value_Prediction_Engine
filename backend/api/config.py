@@ -10,12 +10,15 @@ from pathlib import Path
 from typing import Any
 
 from loguru import logger
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+ROOT_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 
 class APISettings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ROOT_ENV_FILE),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
@@ -67,6 +70,12 @@ class APISettings(BaseSettings):
 
     # Deployment toggles
     DISABLE_HEAVY_MODELS: bool = False
+
+    @field_validator("ENVIRONMENT")
+    @classmethod
+    def normalize_environment(cls, value: str) -> str:
+        # Strip inline comments like "development # ..."
+        return value.split("#", 1)[0].strip()
 
 
 @lru_cache(maxsize=1)

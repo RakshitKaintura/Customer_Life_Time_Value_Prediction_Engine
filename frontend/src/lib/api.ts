@@ -3,6 +3,7 @@
  */
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 export interface LTVScore {
   customer_id: string;
@@ -47,6 +48,14 @@ export interface ModelPerformance {
   last_scored_at: string | null;
 }
 
+export interface HealthResponse {
+  status: string;
+  environment?: string;
+  models_loaded?: boolean;
+  db_connected?: boolean;
+  scoring_engine?: boolean;
+}
+
 export interface SegmentStat {
   segment: string;
   avg_ltv: number;
@@ -64,6 +73,7 @@ async function apiFetch<T>(
     ...options,
     headers: {
       "Content-Type": "application/json",
+      ...(API_KEY ? { "X-API-Key": API_KEY } : {}),
       ...(options.headers || {}),
     },
   });
@@ -113,5 +123,5 @@ export const ltvApi = {
   getSegmentStats: () =>
     apiFetch<{ data: SegmentStat[] }>("/segment-stats"),
 
-  health: () => apiFetch<{ status: string }>("/health"),
+  health: () => apiFetch<HealthResponse>("/health"),
 };

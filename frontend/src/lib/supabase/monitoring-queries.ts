@@ -11,15 +11,17 @@ export async function getDriftHistory(days = 30) {
     .from("ltv_drift_alerts")
     .select("alert_id, detected_at, alert_type, psi_score, mean_shift_pct, status")
     .gte("detected_at", new Date(Date.now() - days * 86400000).toISOString())
+    .lt("psi_score", 10)          // exclude corrupted/test rows — real PSI is always < 2
     .order("detected_at", { ascending: true });
 
   return (data ?? []).map((row) => ({
-    date:       new Date(row.detected_at).toLocaleDateString("en-GB", {
+    date:           new Date(row.detected_at).toLocaleDateString("en-GB", {
       month: "short", day: "numeric",
     }),
-    psi_score:  Number(row.psi_score ?? 0),
-    alert_type: row.alert_type ?? "",
-    status:     row.status ?? "open",
+    psi_score:      Number(row.psi_score ?? 0),
+    mean_shift_pct: row.mean_shift_pct != null ? Number(row.mean_shift_pct) : null,
+    alert_type:     row.alert_type ?? "",
+    status:         row.status ?? "open",
   }));
 }
 

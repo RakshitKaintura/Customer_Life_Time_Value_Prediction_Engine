@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import { useClerk } from "@clerk/nextjs";
 import {
   LayoutDashboard,
-  Users,
   GitBranch,
   Search,
   Calculator,
@@ -16,63 +15,70 @@ import {
   ArrowUpRight,
   Sparkles,
   TableProperties,
+  Megaphone,
   LogOut,
 } from "lucide-react";
 
 const navItems = [
   {
-    href:  "/welcome",
-    label: "Welcome",
-    icon:  Sparkles,
+    href:        "/welcome",
+    label:       "Welcome",
+    icon:        Sparkles,
     description: "Project overview & quick start",
   },
   {
-    href:  "/",
-    label: "LTV Overview",
-    icon:  LayoutDashboard,
+    href:        "/",
+    label:       "LTV Overview",
+    icon:        LayoutDashboard,
     description: "Score distribution & revenue concentration",
   },
   {
-    href:  "/dataset",
-    label: "Dataset",
-    icon:  TableProperties,
+    href:        "/dataset",
+    label:       "Dataset",
+    icon:        TableProperties,
     description: "Short source data snapshot",
   },
   {
-    href:  "/cohorts",
-    label: "Cohort Analysis",
-    icon:  TrendingUp,
+    href:        "/cohorts",
+    label:       "Cohort Analysis",
+    icon:        TrendingUp,
     description: "Retention curves & LTV by cohort",
   },
   {
-    href:  "/causal",
-    label: "Causal Insights",
-    icon:  GitBranch,
+    href:        "/causal",
+    label:       "Causal Insights",
+    icon:        GitBranch,
     description: "What causes high LTV",
   },
   {
-    href:  "/customers",
-    label: "Customer Lookup",
-    icon:  Search,
+    href:        "/customers",
+    label:       "Customer Lookup",
+    icon:        Search,
     description: "Individual predictions & lookalikes",
   },
   {
-    href:  "/simulator",
-    label: "Marketing ROI",
-    icon:  Calculator,
+    href:        "/simulator",
+    label:       "Marketing ROI",
+    icon:        Calculator,
     description: "CAC simulator & channel ROI",
   },
   {
-    href:  "/model-health",
-    label: "Model Health",
-    icon:  Activity,
+    href:        "/campaigns",
+    label:       "Campaigns",
+    icon:        Megaphone,
+    description: "Airtable sync & Brevo emails",
+  },
+  {
+    href:        "/model-health",
+    label:       "Model Health",
+    icon:        Activity,
     description: "MAE, Gini, drift monitoring",
   },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const { signOut } = useClerk();
 
   const handleSignOut = async () => {

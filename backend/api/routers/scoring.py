@@ -189,6 +189,29 @@ async def get_lookalikes(
             detail=f"No embeddings found for customer '{customer_id}': {exc}",
         )
 
+    missing_scores = [
+        row["candidate_customer_id"]
+        for row in rows
+        if row.get("ltv_36m") is None or row.get("segment") is None
+    ]
+    if missing_scores:
+        score_rows = db.execute_sql(
+            """
+            SELECT DISTINCT ON (customer_id)
+                   customer_id, ltv_36m, segment
+            FROM final_ltv_scores
+            WHERE customer_id = ANY(:customer_ids)
+            ORDER BY customer_id, scored_at DESC
+            """,
+            {"customer_ids": missing_scores},
+        )
+        score_by_customer = {row["customer_id"]: row for row in score_rows}
+        for row in rows:
+            score = score_by_customer.get(row["candidate_customer_id"])
+            if score:
+                row["ltv_36m"] = row.get("ltv_36m") or score.get("ltv_36m")
+                row["segment"] = row.get("segment") or score.get("segment")
+
     return LookalikeResponse(
         query_customer_id = customer_id,
         lookalikes        = rows,

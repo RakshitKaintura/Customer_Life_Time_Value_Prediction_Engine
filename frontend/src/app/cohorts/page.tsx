@@ -1,5 +1,5 @@
 import { Topbar } from "@/components/nav/topbar";
-import { getCohortData } from "@/lib/supabase/queries";
+import { getCohortData, getCohortRetention } from "@/lib/supabase/queries";
 import { CohortRetentionMatrix } from "./cohort-retention-matrix";
 import { CohortLTVChart } from "./cohort-ltv-chart";
 import { CohortSizeChart } from "./cohort-size-chart";
@@ -7,7 +7,10 @@ import { CohortSizeChart } from "./cohort-size-chart";
 export const revalidate = 300;
 
 export default async function CohortsPage() {
-  const cohortData = await getCohortData();
+  const [cohortData, retentionData] = await Promise.all([
+    getCohortData(),
+    getCohortRetention(),
+  ]);
 
   return (
     <div className="page-container">
@@ -20,7 +23,7 @@ export default async function CohortsPage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <CohortLTVChart data={cohortData} />
         </div>
-        <CohortRetentionMatrix data={cohortData} />
+        <CohortRetentionMatrix data={retentionData} />
       </div>
     </div>
   );

@@ -13,18 +13,18 @@ export async function getOverviewStats() {
 
   const { data: scoreData } = await supabase
     .from("final_ltv_scores")
-    .select("ltv_36m, ltv_12m, segment, ltv_percentile")
+    .select("customer_id, ltv_36m, ltv_12m, segment, ltv_percentile")
     .order("ltv_36m", { ascending: false })
     .limit(5000);
 
-  const { data: customerCount } = await supabase
+  const { count: customerCount } = await supabase
     .from("customers")
     .select("customer_id", { count: "exact", head: true });
 
   return {
-    segmentData: segmentData ?? [],
-    scoreData:   scoreData   ?? [],
-    totalCustomers: customerCount ?? 0,
+    segmentData:    segmentData    ?? [],
+    scoreData:      scoreData      ?? [],
+    totalCustomers: customerCount  ?? 0,
   };
 }
 
@@ -42,20 +42,41 @@ export async function getCohortData() {
 export async function getCohortRetention() {
   const supabase = await createServerSupabaseClient();
 
-  // Fetch retention from rfm_features cohort
-  const { data } = await supabase.rpc("get_cohort_retention_matrix");
+  const { data, error } = await supabase.rpc("get_cohort_retention_matrix");
+  if (error) return [];
   return data ?? [];
 }
 
 export async function getCausalEffects() {
   const supabase = await createServerSupabaseClient();
 
+  const { data: latest } = await supabase
+    .from("causal_treatment_effects")
+    .select("model_version")
+    .order("computed_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!latest?.model_version) return [];
+
   const { data } = await supabase
     .from("causal_treatment_effects")
     .select("*")
+    .eq("model_version", latest.model_version)
     .order("ate", { ascending: false });
 
-  return data ?? [];
+  return (data ?? []).map((row) => ({
+    ...row,
+    ate:          Number(row.ate          ?? 0),
+    ate_lower_ci: Number(row.ate_lower_ci ?? 0),
+    ate_upper_ci: Number(row.ate_upper_ci ?? 0),
+    ate_stderr:   Number(row.ate_stderr   ?? 0),
+    ate_pvalue:   Number(row.ate_pvalue   ?? 0),
+    cate_mean:    Number(row.cate_mean    ?? 0),
+    cate_std:     Number(row.cate_std     ?? 0),
+    cate_min:     Number(row.cate_min     ?? 0),
+    cate_max:     Number(row.cate_max     ?? 0),
+  }));
 }
 
 export async function getColdStartSlices() {
@@ -155,4 +176,42 @@ export async function getModelPerformanceDB() {
     .limit(10);
 
   return { fusion, bgnbd, transformer, shap: shap ?? [] };
+}
+
+export async function getCampaignData() {
+  const supabase = await createServerSupabaseClient();
+
+  // Segment stats — customer count + avg LTV per segment
+  const { data: segmentStats } = await supabase
+    .from("final_ltv_scores")
+    .select("segment, ltv_36m")
+    .not("segment", "is", null);
+
+  // Last 10 marketing sync pipeline runs
+  const { data: pipelineRuns } = await supabase
+    .from("pipeline_runs")
+    .select("*")
+    .eq("pipeline_name", "marketing_sync")
+    .order("started_at", { ascending: false })
+    .limit(10);
+
+  // Aggregate segment stats client-side (avoids need for a DB view)
+  const segmentMap: Record<string, { count: number; totalLtv: number }> = {};
+  for (const row of segmentStats ?? []) {
+    const seg = String(row.segment ?? "unknown");
+    if (!segmentMap[seg]) segmentMap[seg] = { count: 0, totalLtv: 0 };
+    segmentMap[seg].count    += 1;
+    segmentMap[seg].totalLtv += Number(row.ltv_36m ?? 0);
+  }
+
+  const segments = Object.entries(segmentMap).map(([segment, { count, totalLtv }]) => ({
+    segment,
+    customer_count: count,
+    avg_ltv_36m:    count > 0 ? totalLtv / count : 0,
+  }));
+
+  return {
+    segments,
+    pipelineRuns: pipelineRuns ?? [],
+  };
 }

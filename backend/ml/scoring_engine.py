@@ -416,8 +416,10 @@ class LTVScoringEngine:
                 {"cid": customer_id},
             )
             if rows and rows[0].get("ltv_36m_lower") is not None:
-                return (float(rows[0]["ltv_36m_lower"]),
-                        float(rows[0]["ltv_36m_upper"]))
+                lower = float(rows[0]["ltv_36m_lower"])
+                upper = float(rows[0]["ltv_36m_upper"])
+                if upper > lower and upper > ltv_36m * 0.10:
+                    return (lower, upper)
         except Exception:
             pass
         # Fallback: ±40% of point estimate

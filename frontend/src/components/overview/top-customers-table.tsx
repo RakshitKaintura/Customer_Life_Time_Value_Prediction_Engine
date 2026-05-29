@@ -34,7 +34,10 @@ export function TopCustomersTable({ data }: Props) {
           </THead>
           <TBody>
             {data.map((row, i) => (
-              <tr key={String(row.customer_id ?? i)} className="hover:bg-accent/40">
+              <tr
+                key={`${String(row.customer_id ?? "unknown")}-${i}`}
+                className="hover:bg-accent/40"
+              >
                 <TD className="pl-0">
                   <Link
                     href={`/customers/${row.customer_id}`}

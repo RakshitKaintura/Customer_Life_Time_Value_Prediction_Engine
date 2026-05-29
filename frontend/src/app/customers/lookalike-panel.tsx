@@ -15,8 +15,17 @@ interface Props {
 interface LookalikeData {
   candidate_customer_id: string;
   similarity: number;
-  ltv_36m: number;
-  segment: string;
+  ltv_36m: number | null;
+  segment: string | null;
+}
+
+function formatLookalikeLtv(value: number | null | undefined) {
+  return value == null ? "LTV unavailable" : formatCurrency(value);
+}
+
+function formatSimilarity(value: number) {
+  const percent = value * 100;
+  return percent > 99.9 ? `${percent.toFixed(4)}%` : `${percent.toFixed(1)}%`;
 }
 
 export function LookalikePanel({ customerId, initialLookalikes }: Props) {
@@ -72,18 +81,19 @@ export function LookalikePanel({ customerId, initialLookalikes }: Props) {
       </CardHeader>
       <div className="space-y-2">
         {lookalikes.length > 0 ? (
-          lookalikes.map((l) => (
+          lookalikes.map((l, index) => (
             <div
               key={l.candidate_customer_id}
               className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2"
             >
               <div className="flex items-center gap-3">
+                <span className="w-7 text-xs font-medium text-muted-foreground">#{index + 1}</span>
                 <span className="font-mono text-sm text-foreground">{l.candidate_customer_id}</span>
-                <SegmentBadge segment={l.segment} size="sm" />
+                {l.segment && <SegmentBadge segment={l.segment} size="sm" />}
               </div>
               <div className="flex items-center gap-4 text-sm">
-                <span className="text-muted-foreground">{(Number(l.similarity) * 100).toFixed(1)}% similar</span>
-                <span className="font-medium text-foreground">{formatCurrency(Number(l.ltv_36m))}</span>
+                <span className="text-muted-foreground">{formatSimilarity(Number(l.similarity))} similar</span>
+                <span className="font-medium text-foreground">{formatLookalikeLtv(l.ltv_36m)}</span>
               </div>
             </div>
           ))

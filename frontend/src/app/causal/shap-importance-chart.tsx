@@ -37,11 +37,11 @@ export function ShapImportanceChart({ data }: Props) {
       {sorted.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">SHAP importance data not yet computed.</p>
       ) : (
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={sorted} layout="vertical" margin={{ top: 4, right: 16, left: 140, bottom: 0 }}>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={sorted} layout="vertical" margin={{ top: 4, right: 16, left: 128, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke={chartGridStroke} horizontal={false} />
             <XAxis type="number" tick={chartAxisTick} />
-            <YAxis type="category" dataKey="feature_name" tickFormatter={formatFeature} tick={chartAxisTick} width={135} />
+            <YAxis type="category" dataKey="feature_name" tickFormatter={formatFeature} tick={chartAxisTick} width={124} />
             <Tooltip
               formatter={(v: number) => [v.toFixed(4), "Mean |SHAP|"]}
               labelFormatter={formatFeature}

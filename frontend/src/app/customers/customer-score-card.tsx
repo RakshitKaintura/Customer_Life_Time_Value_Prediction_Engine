@@ -15,6 +15,11 @@ export function CustomerScoreCard({ data }: Props) {
   const ltv36m = Number(data.ltv_36m ?? 0);
   const ltv12m = Number(data.ltv_12m ?? 0);
   const ci = data.confidence_interval_36m as [number, number] | null;
+  const ciText = ci
+    ? ci[1] <= 1
+      ? `Uncertainty: ${formatPercent(ci[0])}-${formatPercent(ci[1])}`
+      : `CI: [${formatCurrency(ci[0])}, ${formatCurrency(ci[1])}]`
+    : null;
 
   return (
     <div className="animate-fade-in space-y-4">
@@ -34,7 +39,7 @@ export function CustomerScoreCard({ data }: Props) {
         <div className="text-right">
           <p className="text-3xl font-bold text-foreground">{formatCurrency(ltv36m)}</p>
           <p className="text-sm text-muted-foreground">Predicted LTV (36m)</p>
-          {ci && <p className="text-xs text-muted-foreground">CI: [{formatCurrency(ci[0])}, {formatCurrency(ci[1])}]</p>}
+          {ciText && <p className="text-xs text-muted-foreground">{ciText}</p>}
         </div>
       </div>
 
