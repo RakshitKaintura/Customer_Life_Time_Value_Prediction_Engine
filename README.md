@@ -9,6 +9,46 @@ Production-ready LTV scoring service that combines probabilistic models (BG/NBD,
 - Supabase/Postgres integration for features, scores, and lookups.
 - Dockerized local dev + Render blueprint deployment.
 
+## Dashboard Screenshots
+
+Here is a preview of the application's React frontend:
+
+- **Welcome Page**  
+  An introduction to the LTV Prediction Engine platform, providing navigation guidance and a high-level summary of the system architecture.
+  ![Welcome Page](frontend/public/images/WelcomePage.png)
+
+- **Overview**  
+  A high-level KPI dashboard displaying aggregate predicted lifetime value, global revenue forecasts, and top-performing customer segment metrics.
+  ![Overview Dashboard](frontend/public/images/Overview.png)
+
+- **Dataset View**  
+  An interface for exploring both raw and processed data, checking feature distributions, and managing the customer records used for model training and inference.
+  ![Dataset Page](frontend/public/images/Dataset_Page.png)
+
+- **Customer Lookup**  
+  A deep-dive into individual customer profiles, showing predicted LTV, RFM (Recency, Frequency, Monetary) statistics, transaction history, and segment classification. Also supports cold-start lookups for brand-new users.
+  ![Customer Lookup](frontend/public/images/Customer_Lookup.png)
+
+- **Cohort Analysis**  
+  Visualizes customer retention and LTV progression over time, grouped by acquisition cohorts (e.g., by month of first purchase) to track long-term value evolution.
+  ![Cohort Analysis](frontend/public/images/Cohort_Analysis.png)
+
+- **Model Health**  
+  An ML monitoring dashboard tracking model drift, accuracy metrics (e.g., MAE, RMSE), out-of-time validation results, and feature distribution shifts.
+  ![Model Health](frontend/public/images/Model_Health.png)
+
+- **Causal Insights**  
+  Explores the causal impact of different interventions (like marketing channels or discounts) on customer lifetime value using uplift modeling.
+  ![Causal Insights](frontend/public/images/Causal_Insights.png)
+
+- **Marketing ROI**  
+  Connects predicted LTV directly to Customer Acquisition Costs (CAC) to measure return on ad spend (ROAS) and evaluate the long-term profitability of different acquisition channels.
+  ![Marketing ROI](frontend/public/images/Marketing_ROI.png)
+
+- **Campaign Management**  
+  An actionable interface to orchestrate targeted marketing campaigns based on LTV segments (e.g., VIP retention, churn prevention) and sync them with external integration tools like Brevo.
+  ![Campaign Management](frontend/public/images/Campaign.png)
+
 ## Repository Layout
 - [backend/](backend/) — Core API, ML, data access, and workers.
 - [supabase/](supabase/) — Schema and migrations.
